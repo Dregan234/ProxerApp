@@ -2,7 +2,8 @@
 set -euo pipefail
 
 if [[ ${KEYSTORE:+1} ]] && [[ ${SECRETS:+1} ]]; then
-    echo "${KEYSTORE}" | base64 -d >keystore.jks
+    mkdir -p temp
+    echo "${KEYSTORE}" | base64 -d >temp/keystore.jks
     echo "${SECRETS}" | base64 -d >secrets.properties
     echo "Created secrets."
 else
