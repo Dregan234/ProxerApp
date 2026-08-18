@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="start_page_titles">
+        <item>@string/section_news</item>
+        <item>@string/section_chat</item>
+        <item>@string/section_bookmarks</item>
+        <item>@string/section_anime</item>
+        <item>@string/section_schedule</item>
+    </string-array>
+
+    <string-array name="start_page_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string-array name="notifications_interval_titles">
+        <item>@string/interval_often</item>
+        <item>@string/interval_moderate</item>
+        <item>@string/interval_seldom</item>
+    </string-array>
+
+    <string-array name="notifications_interval_values">
+        <item>30</item>
+        <item>120</item>
+        <item>480</item>
+    </string-array>
+
+    <string-array name="http_log_level_titles">
+        <item>@string/http_log_level_basic</item>
+        <item>@string/http_log_level_headers</item>
+        <item>@string/http_log_level_body</item>
+    </string-array>
+
+    <string-array name="http_log_level_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="profile_settings_constraint_titles">
+        <item>@string/profile_settings_constraint_default</item>
+        <item>@string/profile_settings_constraint_friend</item>
+        <item>@string/profile_settings_constraint_logged_in_users</item>
+        <item>@string/profile_settings_constraint_everyone</item>
+        <item>@string/profile_settings_constraint_private</item>
+    </string-array>
+
+    <string-array name="profile_settings_constraint_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string-array name="profile_settings_friend_request_constraint_titles">
+        <item>@string/profile_settings_constraint_default</item>
+        <item>@string/profile_settings_constraint_everyone</item>
+        <item>@string/profile_settings_constraint_nobody</item>
+    </string-array>
+
+    <string-array name="profile_settings_friend_request_constraint_values">
+        <item>0</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string-array name="profile_settings_video_ads_interval_titles">
+        <item>@string/profile_settings_interval_never</item>
+        <item>@string/profile_settings_interval_always</item>
+        <item>@string/profile_settings_interval_often</item>
+        <item>@string/profile_settings_interval_sometimes</item>
+        <item>@string/profile_settings_interval_rarely</item>
+    </string-array>
+
+    <string-array name="profile_settings_video_ads_interval_values">
+        <item>0</item>
+        <item>1</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
+
+    <string-array name="fragment_edit_comment_rules">
+        <item>@string/fragment_edit_comment_rule_1</item>
+        <item>@string/fragment_edit_comment_rule_2</item>
+        <item>@string/fragment_edit_comment_rule_3</item>
+        <item>@string/fragment_edit_comment_rule_4</item>
+        <item>@string/fragment_edit_comment_rule_5</item>
+        <item>@string/fragment_edit_comment_rule_6</item>
+    </string-array>
+</resources>

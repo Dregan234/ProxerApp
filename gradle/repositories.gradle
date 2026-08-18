@@ -1,0 +1,18 @@
+repositories {
+    google()
+
+    mavenCentral()
+
+    // JCenter was shut down. This mirror keeps the legacy artifacts available.
+    maven {
+        url "https://maven.aliyun.com/repository/jcenter"
+        mavenContent { releasesOnly() }
+    }
+
+    gradlePluginPortal()
+
+    maven {
+        url "https://jitpack.io"
+        mavenContent { releasesOnly() }
+    }
+}

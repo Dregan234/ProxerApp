@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    tags:
+      - '[0-9]*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Install secrets
+        run: .github/workflows/create-secrets.sh
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+          SECRETS: ${{ secrets.SECRETS }}
+
+      - id: build
+        name: Build with Gradle
+        run: ./gradlew ktlintCheck detekt build bundle
+
+      - name: Store reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Reports
+          path: build/reports
+
+      - name: Store outputs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Outputs
+          path: build/outputs
