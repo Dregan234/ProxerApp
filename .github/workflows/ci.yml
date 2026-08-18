@@ -45,3 +45,11 @@ jobs:
         with:
           name: Outputs
           path: build/outputs
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          artifacts: "build/outputs/apk/release/*.apk,build/outputs/bundle/release/*.aab"
+          token: ${{ secrets.GITHUB_TOKEN }}
