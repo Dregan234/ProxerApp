@@ -1,6 +1,7 @@
 package me.proxer.tv
 
 import me.proxer.library.enums.AnimeLanguage
+import me.proxer.library.enums.MediaLanguage
 
 data class TvAnime(
     val id: String,
@@ -15,7 +16,7 @@ data class TvBookmark(
     val entryId: String,
     val title: String,
     val episode: Int,
-    val language: String,
+    val language: MediaLanguage,
     val coverUrl: String
 )
 

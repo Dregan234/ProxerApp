@@ -1,11 +1,16 @@
+@file:Suppress("FunctionNaming")
+
 package me.proxer.tv
 
 import android.view.SurfaceView
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,11 +24,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -33,6 +41,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -63,9 +72,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -83,9 +96,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
 import me.proxer.app.anime.resolver.StreamResolutionResult
-import me.proxer.app.util.data.PreferenceHelper
 import me.proxer.app.util.data.StorageHelper
 import me.proxer.library.ProxerApi
 import me.proxer.library.enums.AnimeLanguage
@@ -95,13 +109,12 @@ import java.nio.charset.StandardCharsets
 private const val SEARCH_ROUTE = "search"
 private const val BOOKMARKS_ROUTE = "bookmarks"
 private const val ACCOUNT_ROUTE = "account"
-private const val INFO_ROUTE = "info/{id}"
+private const val INFO_ROUTE = "info/{id}/{focusEpisode}"
 private const val WATCH_ROUTE = "watch/{id}/{episode}/{language}"
 
 @Composable
 fun ProxerTvApp(
     api: ProxerApi,
-    preferenceHelper: PreferenceHelper,
     storage: StorageHelper,
     initialRoute: String? = null
 ) {
@@ -109,7 +122,7 @@ fun ProxerTvApp(
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                TvViewModel(api, preferenceHelper, storage) as T
+                TvViewModel(api, storage) as T
         }
     }
     val viewModel: TvViewModel = viewModel(factory = factory)
@@ -151,7 +164,7 @@ private fun TvRail(navController: NavHostController, loggedIn: Boolean) {
         RailButton("Suche", Icons.Default.Search, route == SEARCH_ROUTE) {
             navController.navigate(SEARCH_ROUTE) { launchSingleTop = true }
         }
-        RailButton("Lesezeichen", Icons.Default.Bookmarks, route == BOOKMARKS_ROUTE) {
+        RailButton("Merkliste", Icons.Default.Bookmarks, route == BOOKMARKS_ROUTE) {
             navController.navigate(BOOKMARKS_ROUTE) { launchSingleTop = true }
         }
         RailButton("Konto", Icons.Default.AccountCircle, route == ACCOUNT_ROUTE) {
@@ -201,19 +214,20 @@ private fun TvNavHost(navController: NavHostController, viewModel: TvViewModel, 
     NavHost(navController = navController, startDestination = SEARCH_ROUTE, modifier = modifier) {
         composable(SEARCH_ROUTE) {
             SearchScreen(viewModel) { anime ->
-                navController.navigate("info/${encode(anime.id)}")
+                navController.navigate("info/${encode(anime.id)}/0")
             }
         }
         composable(BOOKMARKS_ROUTE) {
             BookmarksScreen(viewModel) { bookmark ->
                 viewModel.rememberBookmark(bookmark)
-                navController.navigate("info/${encode(bookmark.entryId)}")
+                navController.navigate("info/${encode(bookmark.entryId)}/${bookmark.episode}")
             }
         }
         composable(ACCOUNT_ROUTE) { AccountScreen(viewModel) }
         composable(INFO_ROUTE) { entry ->
             val id = entry.arguments?.getString("id").orEmpty()
-            InfoScreen(id, viewModel.animeFor(id), viewModel) {
+            val focusEpisode = entry.arguments?.getString("focusEpisode")?.toIntOrNull()?.takeIf { it > 0 }
+            InfoScreen(id, focusEpisode, viewModel.animeFor(id), viewModel) {
                     episode, language ->
                 navController.navigate("watch/${encode(id)}/$episode/${language.name}")
             }
@@ -307,10 +321,19 @@ private fun SearchScreen(viewModel: TvViewModel, onAnimeSelected: (TvAnime) -> U
 
 @Composable
 private fun AnimeCard(anime: TvAnime, onClick: (TvAnime) -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
     Card(
         onClick = { onClick(anime) },
-        modifier = Modifier.focusable(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFocused) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+        ),
+        border = if (isFocused) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
+        interactionSource = interactionSource
     ) {
         Column {
             AsyncImage(
@@ -339,7 +362,7 @@ private fun BookmarksScreen(viewModel: TvViewModel, onBookmarkSelected: (TvBookm
 
     Column(modifier = Modifier.fillMaxSize().padding(40.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Lesezeichen", style = MaterialTheme.typography.headlineLarge)
+            Text("Merkliste", style = MaterialTheme.typography.headlineLarge)
             Spacer(Modifier.weight(1f))
             IconButton(onClick = { viewModel.loadBookmarks() }, enabled = loggedIn) {
                 Icon(Icons.Default.Refresh, contentDescription = "Aktualisieren")
@@ -347,12 +370,12 @@ private fun BookmarksScreen(viewModel: TvViewModel, onBookmarkSelected: (TvBookm
         }
         Spacer(Modifier.height(24.dp))
         when {
-            !loggedIn -> EmptyState("Melde dich an, um deine Lesezeichen zu sehen.")
+            !loggedIn -> EmptyState("Melde dich an, um deine Merkliste zu sehen.")
             loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
             error != null -> ErrorState(error.orEmpty()) { viewModel.loadBookmarks() }
-            bookmarks.isEmpty() -> EmptyState("Deine Lesezeichen ist leer.")
+            bookmarks.isEmpty() -> EmptyState("Deine Merkliste ist leer.")
             else -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 bookmarks.forEach { bookmark ->
                     BookmarkRow(bookmark, onBookmarkSelected) { pendingDelete = bookmark }
@@ -364,7 +387,7 @@ private fun BookmarksScreen(viewModel: TvViewModel, onBookmarkSelected: (TvBookm
     pendingDelete?.let { bookmark ->
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
-            title = { Text("Aus Lesezeichen entfernen?") },
+            title = { Text("Aus Merkliste entfernen?") },
             text = { Text(bookmark.title) },
             confirmButton = {
                 Button(onClick = {
@@ -381,10 +404,20 @@ private fun BookmarksScreen(viewModel: TvViewModel, onBookmarkSelected: (TvBookm
 
 @Composable
 private fun BookmarkRow(bookmark: TvBookmark, onClick: (TvBookmark) -> Unit, onDelete: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
     Card(
         onClick = { onClick(bookmark) },
-        modifier = Modifier.fillMaxWidth().focusable(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFocused) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+        ),
+        border = if (isFocused) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
+        interactionSource = interactionSource
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
@@ -423,7 +456,7 @@ private fun AccountScreen(viewModel: TvViewModel) {
         Text("Konto", style = MaterialTheme.typography.headlineLarge)
         if (loggedIn) {
             Text("Angemeldet als $username", style = MaterialTheme.typography.titleLarge)
-            Text("Deine Lesezeichen wird live vom Proxer-Konto geladen.")
+            Text("Deine Merkliste wird live vom Proxer-Konto geladen.")
             Button(onClick = viewModel::logout) { Text("Abmelden") }
         } else {
             Text("Gastmodus", style = MaterialTheme.typography.titleLarge)
@@ -434,14 +467,16 @@ private fun AccountScreen(viewModel: TvViewModel) {
                 { password = it },
                 label = { Text("Passwort") },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
             if (twoFactorEnabled) {
                 OutlinedTextField(
                     secretKey,
                     { secretKey = it },
                     label = { Text("Secret Key") },
-                    singleLine = true
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             }
             Button(onClick = { viewModel.login(name, password, secretKey) {} }, enabled = !loading) {
@@ -456,22 +491,41 @@ private fun AccountScreen(viewModel: TvViewModel) {
 @Composable
 private fun InfoScreen(
     id: String,
+    focusEpisode: Int?,
     anime: TvAnime?,
     viewModel: TvViewModel,
     onEpisodeSelected: (Int, AnimeLanguage) -> Unit
 ) {
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var tab by rememberSaveable(id, focusEpisode) { mutableIntStateOf(if (focusEpisode != null) 1 else 0) }
     var languageChooser by remember { mutableStateOf<TvEpisode?>(null) }
     val safeAnime = anime ?: TvAnime("", "Anime", 1, 0f, "")
     val episodes by viewModel.episodes.collectAsStateCompat()
     val info by viewModel.info.collectAsStateCompat()
+    val visibleEpisodes = episodes.ifEmpty {
+        (1..safeAnime.episodeAmount.coerceAtLeast(1)).map { TvEpisode(it, emptyList()) }
+    }
+    val episodeListState = rememberLazyListState()
+    val targetFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(id) {
         viewModel.loadInfo(id)
         viewModel.loadEpisodes(id)
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(40.dp).verticalScroll(rememberScrollState())) {
+    LaunchedEffect(id, focusEpisode, visibleEpisodes) {
+        if (focusEpisode != null) {
+            visibleEpisodes.indexOfFirst { it.number == focusEpisode }
+                .takeIf { it >= 0 }
+                ?.let { index ->
+                    tab = 1
+                    episodeListState.scrollToItem(index)
+                    delay(100)
+                    targetFocusRequester.requestFocus()
+                }
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(40.dp)) {
         Text(info?.title ?: safeAnime.title, style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(10.dp))
         Text("${safeAnime.episodeAmount} Folgen", style = MaterialTheme.typography.titleMedium)
@@ -491,34 +545,27 @@ private fun InfoScreen(
                 Text("Genres: ${info?.genres?.joinToString(" · ")}")
             }
         } else {
-            val visibleEpisodes = episodes.ifEmpty {
-                (1..safeAnime.episodeAmount.coerceAtLeast(1)).map { TvEpisode(it, emptyList()) }
-            }
-            visibleEpisodes.forEach { episode ->
-                Card(
-                    onClick = {
-                        when (episode.languages.size) {
-                            0 -> onEpisodeSelected(episode.number, AnimeLanguage.ENGLISH_SUB)
-                            1 -> onEpisodeSelected(episode.number, episode.languages.first())
-                            else -> languageChooser = episode
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp).focusable(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null)
-                        Spacer(Modifier.width(14.dp))
-                        Column {
-                            Text("Folge ${episode.number}", style = MaterialTheme.typography.titleMedium)
-                            if (episode.languages.isNotEmpty()) {
-                                Text(
-                                    episode.languages.joinToString(" - ") { it.name },
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                state = episodeListState,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(visibleEpisodes, key = { it.number }) { episode ->
+                    EpisodeCard(
+                        episode = episode,
+                        modifier = if (episode.number == focusEpisode) {
+                            Modifier.focusRequester(targetFocusRequester)
+                        } else {
+                            Modifier
+                        },
+                        onClick = {
+                            when (episode.languages.size) {
+                                0 -> onEpisodeSelected(episode.number, AnimeLanguage.ENGLISH_SUB)
+                                1 -> onEpisodeSelected(episode.number, episode.languages.first())
+                                else -> languageChooser = episode
                             }
                         }
-                    }
+                    )
                 }
             }
         }
@@ -542,6 +589,43 @@ private fun InfoScreen(
                 TextButton(onClick = { languageChooser = null }) { Text("Abbrechen") }
             }
         )
+    }
+}
+
+@Composable
+private fun EpisodeCard(
+    episode: TvEpisode,
+    modifier: Modifier,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFocused) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+        ),
+        border = if (isFocused) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
+        interactionSource = interactionSource
+    ) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.PlayArrow, contentDescription = null)
+            Spacer(Modifier.width(14.dp))
+            Column {
+                Text("Folge ${episode.number}", style = MaterialTheme.typography.titleMedium)
+                if (episode.languages.isNotEmpty()) {
+                    Text(
+                        episode.languages.joinToString(" - ") { it.name },
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -574,7 +658,15 @@ private fun WatchScreen(
 
     when (val result = resolution) {
         is StreamResolutionResult.Video -> {
-            Media3VideoPlayer(result, id, episode, language, viewModel.storage)
+            Media3VideoPlayer(
+                result,
+                id,
+                episode,
+                language,
+                viewModel.storage,
+                onProgress = { viewModel.advanceBookmarkIfNeeded(id, episode, language) },
+                onCompleted = { viewModel.advanceBookmarkIfNeeded(id, episode + 1, language) }
+            )
         }
         is StreamResolutionResult.App -> {
             val context = LocalContext.current
@@ -647,7 +739,9 @@ private fun Media3VideoPlayer(
     id: String,
     episode: Int,
     language: AnimeLanguage,
-    storage: StorageHelper
+    storage: StorageHelper,
+    onProgress: () -> Unit,
+    onCompleted: () -> Unit
 ) {
     val context = LocalContext.current
     val savedPosition = remember(video.url.toString(), id, episode, language) {
@@ -656,6 +750,10 @@ private fun Media3VideoPlayer(
     var resumeDecision by rememberSaveable(video.url.toString(), id, episode, language.name) {
         mutableStateOf<Boolean?>(if (savedPosition > 30_000L) null else true)
     }
+    val playerFocusRequester = remember { FocusRequester() }
+    var feedbackIcon by remember { mutableStateOf<ImageVector?>(null) }
+    var feedbackText by remember { mutableStateOf<String?>(null) }
+    var feedbackGeneration by remember { mutableIntStateOf(0) }
     val player = remember(video.url.toString(), resumeDecision) {
         val dataSourceFactory = DefaultHttpDataSource.Factory().apply {
             video.referer?.let { setDefaultRequestProperties(mapOf("Referer" to it)) }
@@ -676,6 +774,7 @@ private fun Media3VideoPlayer(
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_ENDED) {
                     storage.putLastAnimePosition(id, episode, language, 0L)
+                    onCompleted()
                 }
             }
         }
@@ -691,12 +790,117 @@ private fun Media3VideoPlayer(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    LaunchedEffect(player) {
+        while (isActive) {
+            delay(1_000)
+            if (player.currentPosition >= 30_000L) onProgress()
+        }
+    }
+
+    LaunchedEffect(resumeDecision) {
+        if (resumeDecision != null) {
+            delay(100)
+            playerFocusRequester.requestFocus()
+        }
+    }
+
+    LaunchedEffect(feedbackGeneration) {
+        if (feedbackGeneration > 0) {
+            delay(800)
+            feedbackIcon = null
+            feedbackText = null
+        }
+    }
+
+    fun showFeedback(icon: ImageVector? = null, text: String? = null) {
+        feedbackIcon = icon
+        feedbackText = text
+        feedbackGeneration++
+    }
+
+    fun togglePlayback() {
+        player.playWhenReady = !player.playWhenReady
+        showFeedback(icon = if (player.playWhenReady) Icons.Default.PlayArrow else Icons.Default.Pause)
+    }
+
+    fun seekBy(delta: Long) {
+        val duration = player.duration.takeIf { it > 0L } ?: Long.MAX_VALUE
+        val position = (player.currentPosition + delta).coerceIn(0L, duration)
+        player.seekTo(position)
+        showFeedback(text = formatPlaybackPosition(position))
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .focusRequester(playerFocusRequester)
+            .focusable()
+            .onKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) {
+                    false
+                } else {
+                    when (event.nativeKeyEvent.keyCode) {
+                        android.view.KeyEvent.KEYCODE_DPAD_CENTER,
+                        android.view.KeyEvent.KEYCODE_ENTER,
+                        android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                            togglePlayback()
+                            true
+                        }
+                        android.view.KeyEvent.KEYCODE_MEDIA_PLAY -> {
+                            player.playWhenReady = true
+                            showFeedback(icon = Icons.Default.PlayArrow)
+                            true
+                        }
+                        android.view.KeyEvent.KEYCODE_MEDIA_PAUSE -> {
+                            player.playWhenReady = false
+                            showFeedback(icon = Icons.Default.Pause)
+                            true
+                        }
+                        android.view.KeyEvent.KEYCODE_DPAD_LEFT,
+                        android.view.KeyEvent.KEYCODE_MEDIA_REWIND -> {
+                            seekBy(-10_000L)
+                            true
+                        }
+                        android.view.KeyEvent.KEYCODE_DPAD_RIGHT,
+                        android.view.KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
+                            seekBy(10_000L)
+                            true
+                        }
+                        else -> false
+                    }
+                }
+            }
+    ) {
         AndroidView(
             factory = { SurfaceView(it).also { surface -> player.setVideoSurfaceView(surface) } },
             update = { player.setVideoSurfaceView(it) },
             modifier = Modifier.fillMaxSize()
         )
+        feedbackIcon?.let { icon ->
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(72.dp)
+                    .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(36.dp))
+                    .padding(18.dp)
+            )
+        }
+        feedbackText?.let { text ->
+            Text(
+                text = text,
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 40.dp)
+                    .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+            )
+        }
         if (resumeDecision == null) {
             AlertDialog(
                 onDismissRequest = { resumeDecision = false },
@@ -707,6 +911,11 @@ private fun Media3VideoPlayer(
             )
         }
     }
+}
+
+private fun formatPlaybackPosition(position: Long): String {
+    val totalSeconds = position.coerceAtLeast(0L) / 1_000L
+    return "%02d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
 }
 
 @Composable

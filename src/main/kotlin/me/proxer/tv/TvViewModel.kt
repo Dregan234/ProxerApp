@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import me.proxer.app.anime.resolver.StreamResolutionResult
 import me.proxer.app.auth.LocalUser
-import me.proxer.app.util.data.PreferenceHelper
 import me.proxer.app.util.data.StorageHelper
 import me.proxer.app.util.extension.buildSingle
 import me.proxer.app.util.extension.toLocalSettings
+import me.proxer.app.util.extension.toMediaLanguage
 import me.proxer.library.ProxerApi
 import me.proxer.library.ProxerException
 import me.proxer.library.ProxerException.ServerErrorType
@@ -20,13 +20,13 @@ import me.proxer.library.enums.AnimeLanguage
 
 class TvViewModel(
     private val api: ProxerApi,
-    private val preferenceHelper: PreferenceHelper,
     val storage: StorageHelper
 ) : ViewModel() {
 
     private val repository = TvRepository(api)
     private val disposables = CompositeDisposable()
     private val knownAnime = mutableMapOf<String, TvAnime>()
+    private val pendingBookmarkAdvances = mutableMapOf<String, Int>()
     private var searchPage = 0
     private var activeSearchQuery = ""
     private var canLoadMore = true
@@ -64,8 +64,14 @@ class TvViewModel(
     private val _username = MutableStateFlow(storage.user?.name.orEmpty())
     val username: StateFlow<String> = _username.asStateFlow()
 
-    private val _twoFactorEnabled = MutableStateFlow(preferenceHelper.isTwoFactorAuthenticationEnabled)
+    private val _twoFactorEnabled = MutableStateFlow(false)
     val twoFactorEnabled: StateFlow<Boolean> = _twoFactorEnabled.asStateFlow()
+
+    private var loginUsername = ""
+
+    init {
+        if (storage.isLoggedIn) loadBookmarks()
+    }
 
     fun search(query: String) {
         if (query.isBlank()) {
@@ -145,7 +151,33 @@ class TvViewModel(
                 .doFinally { _isLoading.value = false }
                 .subscribe(
                     { _bookmarks.value = it },
-                    { _error.value = it.message ?: "Die Lesezeichen konnte nicht geladen werden." }
+                    { _error.value = it.message ?: "Die Merkliste konnte nicht geladen werden." }
+                )
+        )
+    }
+
+    fun advanceBookmarkIfNeeded(entryId: String, episode: Int, language: AnimeLanguage) {
+        val bookmark = _bookmarks.value.firstOrNull { it.entryId == entryId } ?: return
+        if (episode <= bookmark.episode || pendingBookmarkAdvances[entryId] ?: 0 >= episode) return
+
+        val mediaLanguage = language.toMediaLanguage()
+        pendingBookmarkAdvances[entryId] = episode
+        disposables.add(
+            repository.setBookmark(entryId, episode, mediaLanguage)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { _ ->
+                        _bookmarks.value = _bookmarks.value.map {
+                            if (it.entryId == entryId) {
+                                it.copy(episode = episode, language = mediaLanguage)
+                            } else {
+                                it
+                            }
+                        }
+                        pendingBookmarkAdvances.remove(entryId)
+                    },
+                    { pendingBookmarkAdvances.remove(entryId) }
                 )
         )
     }
@@ -226,16 +258,21 @@ class TvViewModel(
             return
         }
 
+        val normalizedUsername = username.trim()
+        if (normalizedUsername != loginUsername) {
+            _twoFactorEnabled.value = false
+        }
+        loginUsername = normalizedUsername
         _isLoading.value = true
         _error.value = null
         disposables.add(
-            api.user.login(username.trim(), password)
+            api.user.login(normalizedUsername, password)
                 .secretKey(secretKey.trim().ifBlank { null })
                 .buildSingle()
                 .doOnSuccess { storage.temporaryToken = it.loginToken }
                 .flatMap { user -> api.ucp.settings().buildSingle().map { settings -> user to settings } }
                 .doOnSuccess { (user, settings) ->
-                    storage.user = LocalUser(user.loginToken, user.id, username.trim(), user.image)
+                    storage.user = LocalUser(user.loginToken, user.id, normalizedUsername, user.image)
                     storage.profileSettings = settings.toLocalSettings()
                 }
                 .doFinally { storage.temporaryToken = null }
@@ -245,12 +282,12 @@ class TvViewModel(
                 .subscribe(
                     {
                         _isLoggedIn.value = true
-                        _username.value = username.trim()
+                        _username.value = normalizedUsername
+                        loadBookmarks()
                         onSuccess()
                     },
                     {
                         if (it is ProxerException && it.serverErrorType == ServerErrorType.USER_2FA_SECRET_REQUIRED) {
-                            preferenceHelper.isTwoFactorAuthenticationEnabled = true
                             _twoFactorEnabled.value = true
                             _error.value = "Bitte gib deinen 2FA Secret Key ein."
                         } else {

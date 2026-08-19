@@ -43,13 +43,12 @@ class MainActivity : BaseActivity() {
         setContent {
             ProxerTvApp(
                 api = api,
-                preferenceHelper = preferenceHelper,
                 storage = storage,
                 initialRoute = intent.data?.pathSegments?.let { segments ->
                     when (segments.firstOrNull()) {
-                        "info" -> segments.getOrNull(1)?.let { "info/${encode(it)}" }
+                        "info" -> segments.getOrNull(1)?.let { "info/${encode(it)}/0" }
                         "watch" -> segments.getOrNull(1)?.let { id ->
-                            "watch/${encode(id)}/${segments.getOrNull(2)?.toIntOrNull() ?: 1}"
+                            "watch/${encode(id)}/${segments.getOrNull(2)?.toIntOrNull() ?: 1}/ENGLISH_SUB"
                         }
                         else -> null
                     }

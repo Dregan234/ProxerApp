@@ -9,6 +9,7 @@ import me.proxer.app.util.extension.toAnimeStream
 import me.proxer.library.ProxerApi
 import me.proxer.library.enums.AnimeLanguage
 import me.proxer.library.enums.Category
+import me.proxer.library.enums.MediaLanguage
 import me.proxer.library.enums.MediaSearchSortCriteria
 import me.proxer.library.enums.MediaType
 import me.proxer.library.util.ProxerUrls
@@ -47,13 +48,17 @@ class TvRepository(private val api: ProxerApi) {
                     entryId = bookmark.entryId,
                     title = bookmark.name,
                     episode = bookmark.episode,
-                    language = bookmark.language.toString(),
+                    language = bookmark.language,
                     coverUrl = ProxerUrls.entryImage(bookmark.entryId).toString()
                 )
             }
         }
 
     fun deleteBookmark(id: String) = api.ucp.deleteBookmark(id).buildSingle()
+
+    fun setBookmark(entryId: String, episode: Int, language: MediaLanguage) = api.ucp
+        .setBookmark(entryId, episode, language, Category.ANIME)
+        .buildSingle()
 
     fun streams(entryId: String, episode: Int, language: AnimeLanguage): Single<List<TvSource>> = api.anime
         .streams(entryId, episode, language)
