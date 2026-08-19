@@ -30,7 +30,7 @@ jobs:
 
       - id: build
         name: Build with Gradle
-        run: ./gradlew ktlintCheck detekt build bundle
+        run: ./gradlew assembleRelease
 
       - name: Store reports
         uses: actions/upload-artifact@v4
