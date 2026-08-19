@@ -1,6 +1,18 @@
 # Keep stacktraces readeable.
 -keepattributes SourceFile,LineNumberTable
 
+# Preserve reflection metadata required by Retrofit and Moshi custom adapters.
+-keepattributes Signature,Exceptions,*Annotation*,InnerClasses,EnclosingMethod
+
+# Keep custom Moshi adapter methods, including ProxerLibJava's rating adapter.
+-keepclassmembers class * {
+    @com.squareup.moshi.FromJson <methods>;
+    @com.squareup.moshi.ToJson <methods>;
+}
+
+# Moshi's R8 full-mode compatibility rule for reflective adapter delegates.
+-keep,allowobfuscation,allowshrinking class com.squareup.moshi.JsonAdapter
+
 # Keep essential support library class.
 -keep,allowoptimization class androidx.core.app.CoreComponentFactory { *; }
 
