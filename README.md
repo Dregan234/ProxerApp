@@ -1,23 +1,19 @@
-# ![](art/logo/proxer-logo-title.png) Proxer.Me Android [![Latest Release](https://img.shields.io/github/release/proxer/ProxerAndroid.svg)](https://github.com/proxer/ProxerAndroid/releases/latest) [![Build status](https://github.com/proxer/ProxerAndroid/workflows/CI/badge.svg)](https://github.com/proxer/ProxerAndroid/actions?workflow=CI)
-
-### Unmaintained
-
-This app is not maintained anymore and will not receive any more updates. It might or might not work anymore.
+# ![](art/logo/proxer-logo-title.png) Proxer.Me Android [![Latest Release](https://img.shields.io/github/release/Dregan234/ProxerApp.svg)](https://github.com/Dregan234/ProxerApp/releases/latest) [![Build status](https://github.com/Dregan234/ProxerApp/workflows/CI/badge.svg)](https://github.com/Dregan234/ProxerApp/actions?workflow=CI)
 
 ### What is this?
 
-Proxer.Me Android is the official mobile client for the german Anime & Manga page [Proxer.Me](https://proxer.me).<br>
+This app is a community made Android TV app for the german Anime & Manga page [Proxer.Me](https://proxer.me).<br>
 It features major functionalities including an anime player for various hosters and languages, a mobile-friendly manga reader, offline synchronized chat and much more.
 
 ### Downloads
 
-| ![](art/logo/play-logo.png) Google Play Store                           | ![](art/logo/proxer-logo.png) Proxer App Store | ![](art/logo/github-logo.png) Github                                |
-|-------------------------------------------------------------------------|------------------------------------------------|---------------------------------------------------------------------|
-| [Download](https://play.google.com/store/apps/details?id=me.proxer.app) | [Download](https://proxer.me/apps/info/3)      | [Download](https://github.com/proxer/ProxerAndroid/releases/latest) |
+| ![](art/logo/github-logo.png) Github |
+|--------------------------------------|
+| [Download](https://github.com/Dregan234/ProxerApp/releases/latest) |
 
 #### Building yourself
 
-After having installed the following tools: 
+After having installed the following tools:
 
 - [Git](https://git-scm.com/download)
 - [JDK](https://oracle.com/technetwork/java/javase/downloads/index.html)
@@ -25,8 +21,8 @@ After having installed the following tools:
 
 You can run these commands:
 
-- `git clone https://github.com/proxer/ProxerAndroid`
-- `cd ProxerAndroid`
+- `git clone https://github.com/Dregan234/ProxerApp`
+- `cd ProxerApp`
 
 This app needs an API-key to work. You can request one from the administrators at Proxer.
 You then need to create a `secrets.properties` file in the root of the project with the following contents:

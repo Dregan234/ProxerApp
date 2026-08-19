@@ -179,6 +179,8 @@ class StreamActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             window.attributes.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
@@ -394,6 +396,8 @@ class StreamActivity : BaseActivity() {
     }
 
     override fun onStop() {
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         getSafeCastContext()?.removeCastStateListener(castStateListener)
 
         playerManager.pause()
@@ -579,7 +583,6 @@ class StreamActivity : BaseActivity() {
                 play.isVisible = true
             }
             PlayerState.PAUSING -> {
-                playerView.keepScreenOn = false
                 play.contentDescription = getString(R.string.exoplayer_play_description)
                 play.setImageState(intArrayOf(-R.attr.state_pause), true)
 

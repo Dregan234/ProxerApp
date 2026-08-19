@@ -376,8 +376,12 @@ private fun BookmarksScreen(viewModel: TvViewModel, onBookmarkSelected: (TvBookm
             }
             error != null -> ErrorState(error.orEmpty()) { viewModel.loadBookmarks() }
             bookmarks.isEmpty() -> EmptyState("Deine Merkliste ist leer.")
-            else -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                bookmarks.forEach { bookmark ->
+            else -> LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 36.dp)
+            ) {
+                items(bookmarks, key = { it.id }) { bookmark ->
                     BookmarkRow(bookmark, onBookmarkSelected) { pendingDelete = bookmark }
                 }
             }
