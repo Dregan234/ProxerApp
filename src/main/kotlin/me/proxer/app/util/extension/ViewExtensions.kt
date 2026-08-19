@@ -6,7 +6,9 @@ import android.animation.LayoutTransition
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.StateListDrawable
+import android.view.View
 import android.view.ViewGroup
+import android.view.ViewParent
 import android.widget.ImageView
 import androidx.annotation.AttrRes
 import androidx.appcompat.widget.AppCompatTextView
@@ -116,4 +118,41 @@ fun RecyclerView.enableFastScroll() {
     } catch (error: Exception) {
         Timber.e(error, "Could not enable fast scroll")
     }
+}
+
+@Suppress("ReturnCount")
+fun View.findFirstFocusableDescendant(): View? {
+    if (isFocusable && visibility == View.VISIBLE && isAttachedToWindow) {
+        return this
+    }
+
+    if (this is ViewGroup) {
+        for (index in 0 until childCount) {
+            getChildAt(index).findFirstFocusableDescendant()?.let { return it }
+        }
+    }
+
+    return null
+}
+
+fun View.isDescendantOf(ancestor: View): Boolean {
+    var currentParent: ViewParent? = parent
+
+    while (currentParent != null) {
+        if (currentParent === ancestor) {
+            return true
+        }
+
+        currentParent = currentParent.parent
+    }
+
+    return false
+}
+
+fun View.requestTvFocus(): Boolean {
+    if (!isFocusableInTouchMode) {
+        isFocusableInTouchMode = true
+    }
+
+    return requestFocus()
 }

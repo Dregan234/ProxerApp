@@ -22,6 +22,7 @@ import me.proxer.app.R
 import me.proxer.app.ui.ImageDetailActivity
 import me.proxer.app.util.ActivityUtils
 import me.proxer.app.util.DeviceUtils
+import me.proxer.app.util.extension.isDescendantOf
 import me.proxer.app.util.extension.logErrors
 import okhttp3.HttpUrl
 
@@ -167,11 +168,44 @@ abstract class ImageTabsActivity : DrawerActivity() {
         viewPager.offscreenPageLimit = 2
         viewPager.adapter = sectionsPagerAdapter
 
+        if (DeviceUtils.isTvDevice(this)) {
+            viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageSelected(position: Int) {
+                    focusPageContent(position)
+                }
+            })
+        }
+
         if (savedInstanceState == null) {
             viewPager.currentItem = itemToDisplay
         }
 
         mediator = TabLayoutMediator(tabs, viewPager, sectionsTabCallback).also { it.attach() }
+    }
+
+    private fun focusPageContent(position: Int, attempts: Int = 25) {
+        val currentPageFragment = supportFragmentManager
+            .findFragmentByTag("f${sectionsPagerAdapter.getItemId(position)}")
+        val currentPageView = currentPageFragment?.view
+        val focus = currentFocus
+
+        if (focus != null && currentPageView != null && focus.isShown() && focus.isDescendantOf(currentPageView)) {
+            return
+        }
+
+        val contentFragment = currentPageFragment as? BaseContentFragment<*>
+        val view = contentFragment?.view
+
+        when {
+            view != null -> {
+                focus?.clearFocus()
+
+                contentFragment?.focusContentOnTvIfNeeded()
+            }
+            attempts > 0 && (currentPageFragment == null || contentFragment != null) -> {
+                viewPager.post { focusPageContent(position, attempts - 1) }
+            }
+        }
     }
 
     protected open fun loadEmptyImage() {}

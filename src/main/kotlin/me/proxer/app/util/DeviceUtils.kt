@@ -20,6 +20,10 @@ object DeviceUtils {
 
     fun isLargeTablet(context: Context) = context.resources.getBoolean(R.bool.is_large_tablet)
 
+    fun isTvDevice(context: Context) =
+        (context.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK) ==
+            Configuration.UI_MODE_TYPE_TELEVISION
+
     @Suppress("DEPRECATION")
     fun getScreenWidth(context: Context): Int {
         val windowManager = requireNotNull(context.getSystemService<WindowManager>())

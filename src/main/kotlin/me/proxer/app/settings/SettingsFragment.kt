@@ -174,8 +174,10 @@ class SettingsFragment : XpPreferenceFragment(), OnSharedPreferenceChangeListene
             actionCallback = View.OnClickListener {
                 val intent = packageManager.getLaunchIntentForPackage(BuildConfig.APPLICATION_ID)?.clearTop()
 
-                startActivity(intent)
-                exitProcess(0)
+                intent?.let {
+                    startActivity(it)
+                    exitProcess(0)
+                }
             }
         )
     }

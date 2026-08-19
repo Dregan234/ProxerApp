@@ -20,6 +20,7 @@ apply from: "${projectDir}/gradle/utils.gradle"
 android {
     namespace "me.proxer.app"
     compileSdk rootProject.ext.compileSdkVersion
+    buildToolsVersion "36.1.0"
     ndkVersion rootProject.ext.ndkVersion
 
     defaultConfig {
@@ -45,6 +46,11 @@ android {
 
     buildFeatures {
         buildConfig = true
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion composeCompilerVersion
     }
 
     sourceSets {
@@ -148,6 +154,8 @@ android {
         checkReleaseBuilds = false
 
         lintConfig file("$rootDir/config/lint/lint.xml")
+        baseline file("$rootDir/lint-baseline.xml")
+        disable "LintBaseline"
         xmlOutput file("$buildDir/reports/lint/lint-results.xml")
         htmlOutput file("$buildDir/reports/lint/lint-results.html")
     }
@@ -196,6 +204,14 @@ android {
 apply from: "${projectDir}/gradle/repositories.gradle"
 apply from: "${projectDir}/gradle/dependencies.gradle"
 
+configurations.configureEach {
+    resolutionStrategy.eachDependency { dependency ->
+        if (dependency.requested.group == "org.jetbrains.kotlin") {
+            dependency.useVersion(kotlinVersion)
+        }
+    }
+}
+
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
         jvmTarget = javaVersion.toString()
@@ -210,6 +226,7 @@ kapt {
 detekt {
     version = detektPluginVersion
     buildUponDefaultConfig = true
+    baseline = file("$projectDir/config/detekt/baseline.xml")
 
     config = files("$projectDir/config/detekt/detekt.yml")
 

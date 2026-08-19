@@ -30,12 +30,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/item_margin"
                     android:layout_marginEnd="@dimen/item_margin"
+                    android:focusedByDefault="true"
                     android:minLines="2"
                     android:textAppearance="@style/TextAppearance.AppCompat.Button"
                     android:visibility="gone"
                     app:layout_columnWeight="1"
                     app:layout_gravity="fill"
                     app:layout_rowWeight="1"
+                    tools:targetApi="o"
                     tools:text="previous"
                     tools:visibility="visible" />
 

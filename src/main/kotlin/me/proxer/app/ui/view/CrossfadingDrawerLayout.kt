@@ -16,7 +16,7 @@ class CrossfadingDrawerLayout @JvmOverloads constructor(
 
     var crossfader: Crossfader<*>? = null
 
-    private val isTablet = DeviceUtils.isTablet(context)
+    private val isTablet = DeviceUtils.isTablet(context) && !DeviceUtils.isTvDevice(context)
 
     override fun onFinishInflate() {
         super.onFinishInflate()

@@ -4,7 +4,9 @@ import android.app.Activity
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import com.mikepenz.crossfader.Crossfader
 import com.mikepenz.crossfader.view.CrossFadeSlidingPaneLayout
 import com.mikepenz.iconics.IconicsDrawable
@@ -15,9 +17,12 @@ import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.materialdrawer.holder.ImageHolder
 import com.mikepenz.materialdrawer.iconics.iconicsIcon
 import com.mikepenz.materialdrawer.interfaces.ICrossfader
+import com.mikepenz.materialdrawer.interfaces.OnPostBindViewListener
+import com.mikepenz.materialdrawer.model.AbstractDrawerItem
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem
 import com.mikepenz.materialdrawer.model.ProfileSettingDrawerItem
+import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem
 import com.mikepenz.materialdrawer.model.interfaces.IProfile
 import com.mikepenz.materialdrawer.model.interfaces.descriptionRes
 import com.mikepenz.materialdrawer.model.interfaces.iconDrawable
@@ -47,7 +52,7 @@ import me.proxer.library.util.ProxerUrls
  */
 @Suppress("UNUSED_PARAMETER")
 class MaterialDrawerWrapper(
-    context: Activity,
+    private val context: Activity,
     toolbar: Toolbar,
     savedInstanceState: Bundle?,
     private val isMain: Boolean
@@ -76,7 +81,7 @@ class MaterialDrawerWrapper(
     private val crossfader: Crossfader<*>?
 
     init {
-        val isTablet = DeviceUtils.isTablet(context)
+        val isTablet = DeviceUtils.isTablet(context) && !DeviceUtils.isTvDevice(context)
 
         val sliderViewToUse = when (isTablet) {
             true -> MaterialDrawerSliderView(context)
@@ -114,6 +119,15 @@ class MaterialDrawerWrapper(
                 profileClickSubject.onNext(drawerItem)
 
                 false
+            }
+
+            if (DeviceUtils.isTvDevice(context)) {
+                isFocusable = true
+                isFocusableInTouchMode = false
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                    foreground = ContextCompat.getDrawable(context, R.drawable.drawer_focus_foreground)
+                }
             }
         }
 
@@ -186,6 +200,83 @@ class MaterialDrawerWrapper(
         headerView.profiles = generateProfiles(context).toMutableList()
     }
 
+    fun clickFocusedItem(): Boolean {
+        val focused = sliderView.recyclerView.focusedChild
+        val item = focused?.getTag(com.mikepenz.materialdrawer.R.id.material_drawer_item) as? IDrawerItem<*>
+            ?: return false
+
+        val profileItem = ProfileItem.fromIdOrNull(item.identifier)
+        val drawerItem = DrawerItem.fromIdOrNull(item.identifier)
+
+        val handled = when {
+            profileItem != null -> {
+                profileClickSubject.onNext(profileItem)
+
+                true
+            }
+            drawerItem != null -> {
+                if (drawerItem.id >= 10L) {
+                    miniSliderView?.setSelection(-1)
+                }
+
+                itemClickSubject.onNext(drawerItem)
+
+                true
+            }
+            else -> false
+        }
+
+        if (handled) {
+            sliderView.drawerLayout?.close()
+        }
+
+        return handled
+    }
+
+    fun toggleSelectionList() {
+        headerView.selectionListShown = !headerView.selectionListShown
+    }
+
+    fun handleFocusAction(): Boolean {
+        if (context.currentFocus == headerView) {
+            toggleSelectionList()
+
+            return true
+        }
+
+        return clickFocusedItem()
+    }
+
+    fun focusFirstItem() {
+        val recyclerView = sliderView.recyclerView
+
+        recyclerView.post {
+            val firstFocusable = (0 until recyclerView.childCount)
+                .map { recyclerView.getChildAt(it) }
+                .firstOrNull { it.isFocusable }
+
+            (firstFocusable ?: recyclerView).requestFocus()
+        }
+    }
+
+    private fun setupTvFocus(item: AbstractDrawerItem<*, *>) {
+        if (!DeviceUtils.isTvDevice(context)) {
+            return
+        }
+
+        @Suppress("DEPRECATION")
+        item.withPostOnBindViewListener(object : OnPostBindViewListener {
+            override fun onBindView(drawerItem: IDrawerItem<*>, view: View) {
+                view.isFocusable = true
+                view.isFocusableInTouchMode = false
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                    view.foreground = ContextCompat.getDrawable(view.context, R.drawable.drawer_focus_foreground)
+                }
+            }
+        })
+    }
+
     private fun generateProfiles(context: Context): Array<IProfile> = storageHelper.user.let {
         when (it) {
             null -> arrayOf(
@@ -193,11 +284,15 @@ class MaterialDrawerWrapper(
                     nameRes = R.string.section_guest
                     iconRes = R.mipmap.ic_launcher
                     identifier = ProfileItem.GUEST.id
+
+                    setupTvFocus(this)
                 },
                 ProfileSettingDrawerItem().apply {
                     nameRes = R.string.section_login
                     iconicsIcon = CommunityMaterial.Icon.cmd_account_key
                     identifier = ProfileItem.LOGIN.id
+
+                    setupTvFocus(this)
                 }
             )
             else -> arrayOf(
@@ -215,21 +310,29 @@ class MaterialDrawerWrapper(
                     } else {
                         iconUrl = ProxerUrls.userImage(it.image).toString()
                     }
+
+                    setupTvFocus(this)
                 },
                 ProfileSettingDrawerItem().apply {
                     nameRes = R.string.section_notifications
                     iconicsIcon = CommunityMaterial.Icon.cmd_bell_outline
                     identifier = ProfileItem.NOTIFICATIONS.id
+
+                    setupTvFocus(this)
                 },
                 ProfileSettingDrawerItem().apply {
                     nameRes = R.string.section_profile_settings
                     iconicsIcon = CommunityMaterial.Icon.cmd_account_settings
                     identifier = ProfileItem.PROFILE_SETTINGS.id
+
+                    setupTvFocus(this)
                 },
                 ProfileSettingDrawerItem().apply {
                     nameRes = R.string.section_logout
                     iconicsIcon = CommunityMaterial.Icon.cmd_account_remove
                     identifier = ProfileItem.LOGOUT.id
+
+                    setupTvFocus(this)
                 }
             )
         }
@@ -241,30 +344,40 @@ class MaterialDrawerWrapper(
             iconicsIcon = CommunityMaterial.Icon3.cmd_newspaper
             identifier = DrawerItem.NEWS.id
             isSelectable = isMain
+
+            setupTvFocus(this)
         },
         PrimaryDrawerItem().apply {
             nameRes = R.string.section_chat
             iconicsIcon = CommunityMaterial.Icon3.cmd_message_text
             identifier = DrawerItem.CHAT.id
             isSelectable = isMain
+
+            setupTvFocus(this)
         },
         PrimaryDrawerItem().apply {
             nameRes = R.string.section_bookmarks
             iconicsIcon = CommunityMaterial.Icon.cmd_bookmark
             identifier = DrawerItem.BOOKMARKS.id
             isSelectable = isMain
+
+            setupTvFocus(this)
         },
         PrimaryDrawerItem().apply {
             nameRes = R.string.section_anime
             iconicsIcon = CommunityMaterial.Icon3.cmd_television
             identifier = DrawerItem.ANIME.id
             isSelectable = isMain
+
+            setupTvFocus(this)
         },
         PrimaryDrawerItem().apply {
             nameRes = R.string.section_schedule
             iconicsIcon = CommunityMaterial.Icon.cmd_calendar
             identifier = DrawerItem.SCHEDULE.id
             isSelectable = isMain
+
+            setupTvFocus(this)
         }
     )
 
@@ -274,12 +387,16 @@ class MaterialDrawerWrapper(
             iconicsIcon = CommunityMaterial.Icon2.cmd_information_outline
             isSelectable = isMain
             identifier = DrawerItem.INFO.id
+
+            setupTvFocus(this)
         },
         PrimaryDrawerItem().apply {
             nameRes = R.string.section_settings
             iconicsIcon = CommunityMaterial.Icon.cmd_cog
             isSelectable = isMain
             identifier = DrawerItem.SETTINGS.id
+
+            setupTvFocus(this)
         }
     )
 

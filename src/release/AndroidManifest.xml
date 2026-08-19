@@ -6,6 +6,7 @@
     <application tools:ignore="GoogleAppIndexingWarning">
         <activity
             android:name=".ui.crash.CrashActivity"
+            android:exported="false"
             android:process=":error_activity">
             <intent-filter>
                 <action android:name="cat.ereza.customactivityoncrash.ERROR" />

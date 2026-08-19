@@ -77,7 +77,10 @@ class LoginDialog : BaseDialog() {
         if (savedInstanceState == null) {
             username.requestFocus()
 
-            dialog?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+            dialog?.window?.setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or
+                    WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+            )
         }
 
         setupViews()

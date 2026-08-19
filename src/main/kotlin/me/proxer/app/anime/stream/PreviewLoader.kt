@@ -26,7 +26,12 @@ object PreviewLoader {
 
         fun getFrameAtTime(timeUs: Long, size: Size): Bitmap? {
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                mediaMetadataRetriever.getScaledFrameAtTime(timeUs, 0, size.width, size.height)
+                mediaMetadataRetriever.getScaledFrameAtTime(
+                    timeUs,
+                    MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                    size.width,
+                    size.height
+                )
             } else {
                 mediaMetadataRetriever.getFrameAtTime(timeUs)
             }

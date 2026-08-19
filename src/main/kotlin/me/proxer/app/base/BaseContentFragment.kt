@@ -16,13 +16,17 @@ import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import kotterknife.bindView
 import me.proxer.app.R
+import me.proxer.app.util.DeviceUtils
 import me.proxer.app.util.ErrorUtils.ErrorAction
 import me.proxer.app.util.ErrorUtils.ErrorAction.Companion.ACTION_MESSAGE_DEFAULT
 import me.proxer.app.util.ErrorUtils.ErrorAction.Companion.ACTION_MESSAGE_HIDE
 import me.proxer.app.util.Utils
+import me.proxer.app.util.extension.findFirstFocusableDescendant
+import me.proxer.app.util.extension.requestTvFocus
 import me.proxer.app.util.extension.resolveColor
 import me.proxer.library.enums.Device
 import me.proxer.library.util.ProxerUrls
+import timber.log.Timber
 
 /**
  * @author Ruben Gees
@@ -108,6 +112,39 @@ abstract class BaseContentFragment<T>(@LayoutRes contentLayoutId: Int) : BaseFra
 
     protected open fun showData(data: T) {
         contentContainer.isVisible = true
+
+        focusContentOnTvIfNeeded()
+    }
+
+    fun focusContentOnTvIfNeeded() {
+        if (DeviceUtils.isTvDevice(requireContext()) && !hostingActivity.isCurrentFocusInContent()) {
+            focusContentWhenReady(contentContainer)
+        }
+    }
+
+    private fun focusContentWhenReady(view: View, attempts: Int = 25) {
+        if (hostingActivity.isCurrentFocusInContent()) {
+            return
+        }
+
+        val target = view.findFirstFocusableDescendant()
+        val requestFocusResult = target?.requestTvFocus() == true
+
+        if (requestFocusResult) {
+            return
+        }
+
+        Timber.d(
+            "Focus attempt failed. attempts=$attempts target=$target " +
+                "requestFocusResult=$requestFocusResult currentFocus=${hostingActivity.currentFocus} " +
+                "hasWindowFocus=${hostingActivity.hasWindowFocus()} " +
+                "isInTouchMode=${hostingActivity.window?.decorView?.isInTouchMode()} " +
+                "isCurrentFocusInContent=${hostingActivity.isCurrentFocusInContent()}"
+        )
+
+        if (attempts > 0) {
+            view.post { focusContentWhenReady(view, attempts - 1) }
+        }
     }
 
     protected open fun hideData() {
@@ -137,6 +174,8 @@ abstract class BaseContentFragment<T>(@LayoutRes contentLayoutId: Int) : BaseFra
                     else -> action.toClickListener(hostingActivity)?.onClick(errorButton) ?: viewModel.load()
                 }
             }
+
+        focusContentOnTvIfNeeded()
     }
 
     protected open fun hideError() {

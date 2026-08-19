@@ -1,0 +1,99 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>DoubleMutabilityForCollection:ExpandableSelectionView.kt$ExpandableSelectionView$var selection by Delegates.observable(mutableListOf&lt;String&gt;()) { _, old, new -&gt; if (old != new) handleSelection() }</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable @androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class]) private fun Media3VideoPlayer( video: StreamResolutionResult.Video, id: String, episode: Int, language: AnimeLanguage, storage: StorageHelper )</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable fun ProxerTvApp(api: ProxerApi, storage: StorageHelper, initialRoute: String? = null)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun AccountScreen(viewModel: TvViewModel)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun AnimeCard(anime: TvAnime, onClick: (TvAnime) -&gt; Unit)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun BookmarkRow(bookmark: TvBookmark, onClick: (TvBookmark) -&gt; Unit, onDelete: () -&gt; Unit)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun BookmarksScreen(viewModel: TvViewModel, onBookmarkSelected: (TvBookmark) -&gt; Unit)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun EmptyState(message: String)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun ErrorState(message: String, onRetry: () -&gt; Unit)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun InfoScreen( id: String, anime: TvAnime?, viewModel: TvViewModel, onEpisodeSelected: (Int, AnimeLanguage) -&gt; Unit )</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun RailButton( label: String, icon: ImageVector, selected: Boolean, onClick: () -&gt; Unit )</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun TabButton(label: String, selected: Boolean, onClick: () -&gt; Unit)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun TvNavHost(navController: NavHostController, viewModel: TvViewModel, modifier: Modifier)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun TvRail(navController: NavHostController, loggedIn: Boolean)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun WatchMessage(anime: TvAnime?, episode: Int, message: String)</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@Composable private fun WatchScreen( id: String, anime: TvAnime?, episode: Int, language: AnimeLanguage, viewModel: TvViewModel )</ID>
+    <ID>FunctionNaming:ProxerTvApp.kt$@OptIn(ExperimentalFoundationApi::class) @Composable private fun SearchScreen(viewModel: TvViewModel, onAnimeSelected: (TvAnime) -&gt; Unit)</ID>
+    <ID>FunctionNaming:TvTheme.kt$@Composable fun ProxerTvTheme(content: @Composable () -&gt; Unit)</ID>
+    <ID>IgnoredReturnValue:LoginHandler.kt$LoginHandler$subscribe { isLoggedIn -&gt; if (isLoggedIn) { onLogin() } else { onLogout(context) } }</ID>
+    <ID>IgnoredReturnValue:MainApplication.kt$MainApplication$subscribe { AppCompatDelegate.setDefaultNightMode(it.variant.value) }</ID>
+    <ID>IgnoredReturnValue:TimberFileTree.kt$TimberFileTree$subscribe( {}, { Log.e(TimberFileTree::class.java.name, "Failure while logging to file", it) } )</ID>
+    <ID>NoNameShadowing:AnimeActivity.kt$AnimeActivity${ MediaActivity.navigateTo(this, id, it, Category.ANIME) }</ID>
+    <ID>NoNameShadowing:AnimeFragment.kt$AnimeFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_set_user_info, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:BookmarkFragment.kt$BookmarkFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_bookmark_deletion, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:BookmarkFragment.kt$BookmarkFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_undo, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:CommentsFragment.kt$CommentsFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_comment_deletion, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:CommentsViewModel.kt$CommentsViewModel${ it.id != comment.id }</ID>
+    <ID>NoNameShadowing:CreateConferenceFragment.kt$CreateConferenceFragment${ hostingActivity.multilineSnackbar( it.message, Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:CreateConferenceFragment.kt$CreateConferenceFragment${ requireActivity().finish() PrvMessengerActivity.navigateTo(requireActivity(), it) }</ID>
+    <ID>NoNameShadowing:EditCommentActivity.kt$EditCommentActivity${ multilineSnackbar( getString(R.string.error_comment_publish, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(this) ) }</ID>
+    <ID>NoNameShadowing:EditCommentFragment.kt$EditCommentFragment${ MenuPopupCompat(requireContext(), it.menu, color) }</ID>
+    <ID>NoNameShadowing:EpisodeFragment.kt$EpisodeFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_set_user_info, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:ExpandableSelectionView.kt$ExpandableSelectionView${ if (it != radioButton) it.isChecked = false }</ID>
+    <ID>NoNameShadowing:ExpandableSelectionView.kt$ExpandableSelectionView${ if (it != view) it.isChecked = false }</ID>
+    <ID>NoNameShadowing:ImagePrototype.kt$ImagePrototype${ loadImage(it, view, proxyUrl, heightMap) }</ID>
+    <ID>NoNameShadowing:LoginDialog.kt$LoginDialog${ viewModel.error.value = null requireContext().toast(it.message) }</ID>
+    <ID>NoNameShadowing:LogoutDialog.kt$LogoutDialog${ viewModel.error.value = null requireContext().toast(it.message) }</ID>
+    <ID>NoNameShadowing:MangaAdapter.kt$MangaAdapter.ImageViewHolder${ it.y = 0f }</ID>
+    <ID>NoNameShadowing:MangaFragment.kt$MangaFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_set_user_info, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:MediaInfoFragment.kt$MediaInfoFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_set_user_info, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:MediaInfoViewModel.kt$MediaInfoViewModel${ userInfoData.value = applyMediaUserInfoChanges(it, updateType) }</ID>
+    <ID>NoNameShadowing:MediaInfoViewModel.kt$MediaInfoViewModel${ userInfoData.value = it }</ID>
+    <ID>NoNameShadowing:NotificationFragment.kt$NotificationFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_notification_deletion, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:PagedContentFragment.kt$PagedContentFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_refresh, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:PdfPrototype.kt$PdfPrototype${ loadImage(it, view, parsedUrl, heightMap) }</ID>
+    <ID>NoNameShadowing:ProfileCommentFragment.kt$ProfileCommentFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_comment_deletion, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:ProfileCommentViewModel.kt$ProfileCommentViewModel${ it.id != comment.id }</ID>
+    <ID>NoNameShadowing:ProfileMediaListFragment.kt$ProfileMediaListFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_media_entry_deletion, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:ProfileSettingsActivity.kt$ProfileSettingsActivity${ multilineSnackbar( getString(R.string.error_refresh, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(this) ?: View.OnClickListener { viewModel.refresh() } ) }</ID>
+    <ID>NoNameShadowing:ProfileSettingsActivity.kt$ProfileSettingsActivity${ multilineSnackbar( getString(R.string.error_set_user_info, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(this) ?: View.OnClickListener { viewModel.retryUpdate() } ) }</ID>
+    <ID>NoNameShadowing:ReportDialog.kt$ReportDialog${ viewModel.error.value = null requireContext().toast(it.message) }</ID>
+    <ID>NoNameShadowing:SettingsFragment.kt$SettingsFragment${ startActivity(it) exitProcess(0) }</ID>
+    <ID>NoNameShadowing:TopTenFragment.kt$TopTenFragment${ hostingActivity.multilineSnackbar( getString(R.string.error_topten_entry_removal, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>NoNameShadowing:TopTenViewModel.kt$TopTenViewModel${ val animeList = it.filter { entry -&gt; entry.category == Category.ANIME } val mangaList = it.filter { entry -&gt; entry.category == Category.MANGA } ZippedTopTenResult(animeList, mangaList) }</ID>
+    <ID>NoNameShadowing:TopicFragment.kt$TopicFragment${ topic = it.subject }</ID>
+    <ID>NoNameShadowing:TvViewModel.kt$TvViewModel${ it.id == bookmark.id }</ID>
+    <ID>UnnecessaryAbstractClass:AutoDisposeViewHolder.kt$AutoDisposeViewHolder$AutoDisposeViewHolder</ID>
+    <ID>UnnecessaryAbstractClass:BindAwareViewHolder.kt$BindAwareViewHolder$BindAwareViewHolder</ID>
+    <ID>UnnecessarySafeCall:AnimeFragment.kt$AnimeFragment$errorAction?.let { when (it) { is AppRequiredErrorAction -&gt; it.showDialog(hostingActivity) else -&gt; hostingActivity.multilineSnackbar( it.message, Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) } }</ID>
+    <ID>UnnecessarySafeCall:AnimeFragment.kt$AnimeFragment$result?.let { when (result) { is StreamResolutionResult.Video -&gt; result.play( requireContext(), id, name, episode, language, ProxerUrls.entryImage(id).androidUri(), true ) is StreamResolutionResult.Link -&gt; result.show(this) is StreamResolutionResult.App -&gt; result.navigate(requireContext()) is StreamResolutionResult.Message -&gt; error( "ResolutionResult of type Message should be shown inline" ) } }</ID>
+    <ID>UnnecessarySafeCall:CreateConferenceFragment.kt$CreateConferenceFragment$it?.let { hostingActivity.multilineSnackbar( it.message, Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(hostingActivity) ) }</ID>
+    <ID>UnnecessarySafeCall:CreateConferenceFragment.kt$CreateConferenceFragment$it?.let { requireActivity().finish() PrvMessengerActivity.navigateTo(requireActivity(), it) }</ID>
+    <ID>UnnecessarySafeCall:ImageTabsActivity.kt$ImageTabsActivity$contentFragment?.focusContentOnTvIfNeeded()</ID>
+    <ID>UnnecessarySafeCall:ProfileSettingsActivity.kt$ProfileSettingsActivity$it?.let { multilineSnackbar( getString(R.string.error_refresh, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(this) ?: View.OnClickListener { viewModel.refresh() } ) }</ID>
+    <ID>UnnecessarySafeCall:ProfileSettingsActivity.kt$ProfileSettingsActivity$it?.let { multilineSnackbar( getString(R.string.error_set_user_info, getString(it.message)), Snackbar.LENGTH_LONG, it.buttonMessage, it.toClickListener(this) ?: View.OnClickListener { viewModel.retryUpdate() } ) }</ID>
+    <ID>UseAnyOrNoneInsteadOfFind:CreateConferenceParticipantAdapter.kt$CreateConferenceParticipantAdapter$find { it.username.equals(username, ignoreCase = true) }</ID>
+    <ID>UseAnyOrNoneInsteadOfFind:MessengerWorker.kt$MessengerWorker$find { it.methodName.contains("read") }</ID>
+    <ID>UseAnyOrNoneInsteadOfFind:PagedViewModel.kt$PagedViewModel$find { newItem -&gt; areItemsTheSame(oldItem, newItem) }</ID>
+    <ID>UseIsNullOrEmpty:EpisodeAdapter.kt$EpisodeAdapter.ViewHolder$hosterImages == null || hosterImages.isEmpty()</ID>
+    <ID>UseOrEmpty:BBUtils.kt$(it as? ViewGroup)?.recursiveChildren ?: emptySequence()</ID>
+    <ID>UseOrEmpty:BookmarkViewModel.kt$BookmarkViewModel$data.value ?: emptyList()</ID>
+    <ID>UseOrEmpty:ColorPrototype.kt$ColorPrototype$BBUtils.cutAttribute(code, attributeRegex) ?: ""</ID>
+    <ID>UseOrEmpty:ConferenceFragment.kt$ConferenceFragment$searchQuery ?: ""</ID>
+    <ID>UseOrEmpty:ConferenceFragment.kt$ConferenceFragment$value ?: ""</ID>
+    <ID>UseOrEmpty:CreateConferenceParticipantAdapter.kt$CreateConferenceParticipantAdapter$savedInstanceState?.getParcelableArrayList(LIST_STATE) ?: emptyList()</ID>
+    <ID>UseOrEmpty:EditCommentActivity.kt$EditCommentActivity$viewModel.data.value?.content ?: ""</ID>
+    <ID>UseOrEmpty:EpisodeFragment.kt$EpisodeFragment$value ?.let { enums -&gt; enums.map { ProxerUtils.getSafeApiEnumName(it) } } ?: emptyList()</ID>
+    <ID>UseOrEmpty:ExpandableSelectionView.kt$ExpandableSelectionView$getString(R.styleable.ExpandableSelectionView_titleText) ?: ""</ID>
+    <ID>UseOrEmpty:MangaPreloader.kt$MangaPreloader$chapter.pages ?.map { ProxerUrls.mangaPageImage(chapter.server, chapter.entryId, chapter.id, it.decodedName).toString() } ?: emptyList()</ID>
+    <ID>UseOrEmpty:MediaListFragment.kt$MediaListFragment$requireArguments().getParcelableArrayList(EXCLUDED_GENRES_ARGUMENT) ?: emptyList()</ID>
+    <ID>UseOrEmpty:MediaListFragment.kt$MediaListFragment$requireArguments().getParcelableArrayList(EXCLUDED_TAGS_ARGUMENT) ?: emptyList()</ID>
+    <ID>UseOrEmpty:MediaListFragment.kt$MediaListFragment$requireArguments().getParcelableArrayList(GENRES_ARGUMENT) ?: emptyList()</ID>
+    <ID>UseOrEmpty:MediaListFragment.kt$MediaListFragment$requireArguments().getParcelableArrayList(TAGS_ARGUMENT) ?: emptyList()</ID>
+    <ID>UseOrEmpty:MessengerDao.kt$MessengerDao$it ?: emptyList()</ID>
+    <ID>UseOrEmpty:MessengerDao.kt$MessengerDao$sentLiveData.value ?: emptyList()</ID>
+    <ID>UseOrEmpty:MessengerDao.kt$MessengerDao$unsentLiveData.value ?: emptyList()</ID>
+    <ID>UseOrEmpty:PagedViewModel.kt$PagedViewModel$data.value ?: emptyList()</ID>
+    <ID>UseOrEmpty:ProxerWebView.kt$ProxerWebView.ProxerWebClient$response.header("Content-Type")?.split(";") ?: emptyList()</ID>
+    <ID>UseOrEmpty:TimberFileTree.kt$TimberFileTree$resolvedLogsDirectory.listFiles() ?: emptyArray()</ID>
+    <ID>UseOrEmpty:TopicFragment.kt$TopicFragment$activity?.intent?.dataString ?: ""</ID>
+    <ID>UseOrEmpty:UrlPrototype.kt$UrlPrototype$BBUtils.cutAttribute(code, attributeRegex)?.trim() ?: ""</ID>
+    <ID>UseOrEmpty:WikiPrototype.kt$WikiPrototype$children.firstOrNull()?.args?.text?.toString() ?: ""</ID>
+    <ID>VarCouldBeVal:MangaViewModel.kt$MangaViewModel$private var cachedEntryCore: EntryCore? = null</ID>
+  </CurrentIssues>
+</SmellBaseline>

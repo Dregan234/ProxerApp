@@ -124,6 +124,8 @@ abstract class PagedContentFragment<T>(
         if (innerAdapter.isEmpty()) {
             showError(ErrorAction(emptyDataMessage, ACTION_MESSAGE_HIDE))
         }
+
+        super.showData(data)
     }
 
     override fun hideData() {

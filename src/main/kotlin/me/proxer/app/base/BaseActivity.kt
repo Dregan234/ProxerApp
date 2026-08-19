@@ -15,6 +15,7 @@ import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
 import kotterknife.bindView
 import me.proxer.app.R
+import me.proxer.app.util.DeviceUtils
 import me.proxer.app.util.ErrorUtils
 import me.proxer.app.util.compat.TaskDescriptionCompat
 import me.proxer.app.util.data.PreferenceHelper
@@ -92,6 +93,16 @@ abstract class BaseActivity : AppCompatActivity(), CustomTabsAware {
         }
     }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+
+        if (hasFocus && DeviceUtils.isTvDevice(this)) {
+            supportFragmentManager.fragments.forEach { fragment ->
+                (fragment as? BaseContentFragment<*>)?.focusContentOnTvIfNeeded()
+            }
+        }
+    }
+
     override fun setLikelyUrl(url: HttpUrl): Boolean {
         return customTabsHelper.mayLaunchUrl(url.androidUri(), bundleOf(), emptyList())
     }
@@ -99,6 +110,8 @@ abstract class BaseActivity : AppCompatActivity(), CustomTabsAware {
     override fun showPage(url: HttpUrl, forceBrowser: Boolean, skipCheck: Boolean) {
         customTabsHelper.fallbackHandleLink(this, url, forceBrowser, skipCheck)
     }
+
+    open fun isCurrentFocusInContent(): Boolean = currentFocus?.isShown() == true
 
     fun snackbar(
         message: CharSequence,

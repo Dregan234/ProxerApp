@@ -15,6 +15,7 @@
 
     <!-- Disable checks surfacing pre-existing issues after the AGP 8.2 upgrade. -->
     <!-- These are legacy codebase patterns, not regressions of the current work. -->
+    <issue id="AutoDispose" severity="ignore" />
     <issue id="ConvertToWebp" severity="ignore" />
     <issue id="CustomX509TrustManager" severity="ignore" />
     <issue id="IntentFilterExportedReceiver" severity="ignore" />

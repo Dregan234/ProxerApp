@@ -17,11 +17,11 @@ import okhttp3.HttpUrl
 sealed class StreamResolutionResult {
 
     class Video(
-        url: HttpUrl,
-        mimeType: String,
-        referer: String? = null,
-        adTag: Uri? = null,
-        internalPlayerOnly: Boolean = false
+        val url: HttpUrl,
+        val mimeType: String,
+        val referer: String? = null,
+        val adTag: Uri? = null,
+        val internalPlayerOnly: Boolean = false
     ) : StreamResolutionResult() {
 
         companion object {
@@ -73,14 +73,14 @@ sealed class StreamResolutionResult {
         }
     }
 
-    class Link(private val url: HttpUrl) : StreamResolutionResult() {
+    class Link(val url: HttpUrl) : StreamResolutionResult() {
 
         fun show(customTabsAware: CustomTabsAware) {
             customTabsAware.showPage(url, skipCheck = true)
         }
     }
 
-    class App(uri: Uri) : StreamResolutionResult() {
+    class App(val uri: Uri) : StreamResolutionResult() {
 
         private val intent = Intent(Intent.ACTION_VIEW)
             .setData(uri)
