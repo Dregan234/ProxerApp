@@ -4,6 +4,9 @@ package me.proxer.tv
 
 import android.view.SurfaceView
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -52,6 +55,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -62,6 +66,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -758,6 +763,10 @@ private fun Media3VideoPlayer(
     var feedbackIcon by remember { mutableStateOf<ImageVector?>(null) }
     var feedbackText by remember { mutableStateOf<String?>(null) }
     var feedbackGeneration by remember { mutableIntStateOf(0) }
+    var controlsVisible by remember { mutableStateOf(false) }
+    var controlsHiddenTick by remember { mutableIntStateOf(0) }
+    var position by remember { mutableLongStateOf(0L) }
+    var duration by remember { mutableLongStateOf(0L) }
     val player = remember(video.url.toString(), resumeDecision) {
         val dataSourceFactory = DefaultHttpDataSource.Factory().apply {
             video.referer?.let { setDefaultRequestProperties(mapOf("Referer" to it)) }
@@ -784,10 +793,10 @@ private fun Media3VideoPlayer(
         }
         player.addListener(listener)
         onDispose {
-            val position = player.currentPosition
-            val duration = player.duration
-            if (position > 0L && duration > 0L && position < duration * 0.95) {
-                storage.putLastAnimePosition(id, episode, language, position)
+            val lastPosition = player.currentPosition
+            val lastDuration = player.duration
+            if (lastPosition > 0L && lastDuration > 0L && lastPosition < lastDuration * 0.95) {
+                storage.putLastAnimePosition(id, episode, language, lastPosition)
             }
             player.removeListener(listener)
             player.release()
@@ -797,7 +806,16 @@ private fun Media3VideoPlayer(
     LaunchedEffect(player) {
         while (isActive) {
             delay(1_000)
+            position = player.currentPosition
+            duration = player.duration
             if (player.currentPosition >= 30_000L) onProgress()
+        }
+    }
+
+    LaunchedEffect(controlsHiddenTick) {
+        if (controlsVisible) {
+            delay(3_000)
+            controlsVisible = false
         }
     }
 
@@ -822,16 +840,23 @@ private fun Media3VideoPlayer(
         feedbackGeneration++
     }
 
+    fun showControls() {
+        controlsVisible = true
+        controlsHiddenTick++
+    }
+
     fun togglePlayback() {
         player.playWhenReady = !player.playWhenReady
         showFeedback(icon = if (player.playWhenReady) Icons.Default.PlayArrow else Icons.Default.Pause)
+        showControls()
     }
 
     fun seekBy(delta: Long) {
-        val duration = player.duration.takeIf { it > 0L } ?: Long.MAX_VALUE
-        val position = (player.currentPosition + delta).coerceIn(0L, duration)
-        player.seekTo(position)
-        showFeedback(text = formatPlaybackPosition(position))
+        val targetDuration = player.duration.takeIf { it > 0L } ?: Long.MAX_VALUE
+        val targetPosition = (player.currentPosition + delta).coerceIn(0L, targetDuration)
+        player.seekTo(targetPosition)
+        showFeedback(text = formatPlaybackPosition(targetPosition))
+        showControls()
     }
 
     Box(
@@ -854,11 +879,13 @@ private fun Media3VideoPlayer(
                         android.view.KeyEvent.KEYCODE_MEDIA_PLAY -> {
                             player.playWhenReady = true
                             showFeedback(icon = Icons.Default.PlayArrow)
+                            showControls()
                             true
                         }
                         android.view.KeyEvent.KEYCODE_MEDIA_PAUSE -> {
                             player.playWhenReady = false
                             showFeedback(icon = Icons.Default.Pause)
+                            showControls()
                             true
                         }
                         android.view.KeyEvent.KEYCODE_DPAD_LEFT,
@@ -905,6 +932,54 @@ private fun Media3VideoPlayer(
                     .padding(horizontal = 14.dp, vertical = 8.dp)
             )
         }
+        AnimatedVisibility(
+            visible = controlsVisible,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            Surface(
+                color = Color.Black.copy(alpha = 0.65f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 24.dp)
+            ) {
+                Column {
+                    LinearProgressIndicator(
+                        progress = {
+                            if (duration > 0L) {
+                                (position / duration.toFloat()).coerceIn(0f, 1f)
+                            } else {
+                                0f
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 16.dp),
+                        color = Color.White
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = formatPlaybackPosition(position),
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = formatPlaybackPosition(duration),
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+        }
         if (resumeDecision == null) {
             AlertDialog(
                 onDismissRequest = { resumeDecision = false },
@@ -919,7 +994,14 @@ private fun Media3VideoPlayer(
 
 private fun formatPlaybackPosition(position: Long): String {
     val totalSeconds = position.coerceAtLeast(0L) / 1_000L
-    return "%02d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
+    val hours = totalSeconds / 3600L
+    val minutes = (totalSeconds % 3600L) / 60L
+    val seconds = totalSeconds % 60L
+    return if (hours > 0L) {
+        "%d:%02d:%02d".format(hours, minutes, seconds)
+    } else {
+        "%02d:%02d".format(minutes, seconds)
+    }
 }
 
 @Composable
