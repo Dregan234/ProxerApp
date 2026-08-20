@@ -2,7 +2,11 @@
 
 package me.proxer.tv
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.view.SurfaceView
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -116,6 +120,7 @@ private const val BOOKMARKS_ROUTE = "bookmarks"
 private const val ACCOUNT_ROUTE = "account"
 private const val INFO_ROUTE = "info/{id}/{focusEpisode}"
 private const val WATCH_ROUTE = "watch/{id}/{episode}/{language}"
+private const val NEXT_EPISODE_THRESHOLD = 0.9f
 
 @Composable
 fun ProxerTvApp(
@@ -767,6 +772,14 @@ private fun Media3VideoPlayer(
     var controlsHiddenTick by remember { mutableIntStateOf(0) }
     var position by remember { mutableLongStateOf(0L) }
     var duration by remember { mutableLongStateOf(0L) }
+    var advancedToNext by remember { mutableStateOf(false) }
+    val activity = remember(context) {
+        var current: Context = context
+        while (current is ContextWrapper && current !is Activity) {
+            current = current.baseContext
+        }
+        current as? Activity
+    }
     val player = remember(video.url.toString(), resumeDecision) {
         val dataSourceFactory = DefaultHttpDataSource.Factory().apply {
             video.referer?.let { setDefaultRequestProperties(mapOf("Referer" to it)) }
@@ -790,6 +803,18 @@ private fun Media3VideoPlayer(
                     onCompleted()
                 }
             }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                val window = activity?.window ?: return
+                if (isPlaying) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+            }
+        }
+        if (player.isPlaying) {
+            activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
         player.addListener(listener)
         onDispose {
@@ -798,6 +823,7 @@ private fun Media3VideoPlayer(
             if (lastPosition > 0L && lastDuration > 0L && lastPosition < lastDuration * 0.95) {
                 storage.putLastAnimePosition(id, episode, language, lastPosition)
             }
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             player.removeListener(listener)
             player.release()
         }
@@ -809,6 +835,10 @@ private fun Media3VideoPlayer(
             position = player.currentPosition
             duration = player.duration
             if (player.currentPosition >= 30_000L) onProgress()
+            if (duration > 0L && position >= duration * NEXT_EPISODE_THRESHOLD && !advancedToNext) {
+                advancedToNext = true
+                onCompleted()
+            }
         }
     }
 
