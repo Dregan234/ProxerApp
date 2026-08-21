@@ -3,7 +3,7 @@
 ### What is this?
 
 This app is a community made Android TV app for the german Anime & Manga page [Proxer.Me](https://proxer.me).<br>
-It features major functionalities including an anime player for various hosters and languages, a mobile-friendly manga reader, offline synchronized chat and much more.
+It features major functionalities including an anime player for various hosters and languages and much more.
 
 ### Downloads
 
@@ -75,27 +75,3 @@ If you want to build the app for testing purposes in the `debug` variant, run:
 # Windows
 gradlew.bat assembleDebug
 ```
-
-### Screenshots
-
-| News                         | Anime List                         | Manga Reader                         |
-|------------------------------|------------------------------------|--------------------------------------|
-| ![](art/screenshot/news.png) | ![](art/screenshot/anime-list.png) | ![](art/screenshot/manga-reader.png) |
-
-| Media Detail                         | Instant Chat                            | Public Chat                         |
-|--------------------------------------|-----------------------------------------|-------------------------------------|
-| ![](art/screenshot/media-detail.png) | ![](art/screenshot/conference-list.png) | ![](art/screenshot/public-chat.png) |
-
-| Anime Stream List                     | Anime Player                       |
-|---------------------------------------|------------------------------------|
-| ![](art/screenshot/anime-streams.png) | ![](art/screenshot/anime-play.png) |
-
-| Profile Overview                | Profile Top Ten                    | Profile Media List               |
-|---------------------------------|------------------------------------|----------------------------------|
-| ![](art/screenshot/profile.png) | ![](art/screenshot/ucp-topten.png) | ![](art/screenshot/ucp-list.png) |
-
-### Contributions and contributors
-
-A guide for contribution can be found [here](.github/CONTRIBUTING.md).
-
-- [@InfiniteSoul](https://github.com/InfiniteSoul) for implementing a persistent Navigation Drawer for tablets and UI improvements.
