@@ -4,28 +4,20 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.view.View
-import com.google.android.exoplayer2.ExoPlaybackException
-import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.google.android.exoplayer2.upstream.Loader
 import me.proxer.app.R
 import me.proxer.app.auth.LoginDialog
 import me.proxer.app.base.BaseActivity
-import me.proxer.app.comment.CommentInvalidProgressException
-import me.proxer.app.comment.CommentTooLongException
 import me.proxer.app.exception.AgeConfirmationRequiredException
 import me.proxer.app.exception.ChatException
 import me.proxer.app.exception.NotConnectedException
 import me.proxer.app.exception.NotLoggedInException
 import me.proxer.app.exception.PartialException
 import me.proxer.app.exception.StreamResolutionException
-import me.proxer.app.manga.MangaLinkException
-import me.proxer.app.manga.MangaNotAvailableException
 import me.proxer.app.settings.AgeConfirmationDialog
 import me.proxer.app.util.ErrorUtils.ErrorAction.ButtonAction.AGE_CONFIRMATION
 import me.proxer.app.util.ErrorUtils.ErrorAction.ButtonAction.CAPTCHA
 import me.proxer.app.util.ErrorUtils.ErrorAction.ButtonAction.LOGIN
 import me.proxer.app.util.ErrorUtils.ErrorAction.ButtonAction.NETWORK_SETTINGS
-import me.proxer.app.util.ErrorUtils.ErrorAction.ButtonAction.OPEN_LINK
 import me.proxer.app.util.ErrorUtils.ErrorAction.Companion.ACTION_MESSAGE_DEFAULT
 import me.proxer.app.util.ErrorUtils.ErrorAction.Companion.ACTION_MESSAGE_HIDE
 import me.proxer.app.util.data.StorageHelper
@@ -133,7 +125,6 @@ import me.proxer.library.ProxerException.ServerErrorType.WIKI_INVALID_PERMISSION
 import me.proxer.library.ProxerException.ServerErrorType.WIKI_INVALID_TITLE
 import me.proxer.library.enums.Device
 import me.proxer.library.util.ProxerUrls
-import okhttp3.HttpUrl
 import java.io.IOException
 import java.net.SocketTimeoutException
 import javax.net.ssl.SSLPeerUnverifiedException
@@ -144,8 +135,6 @@ import javax.net.ssl.SSLPeerUnverifiedException
 object ErrorUtils {
 
     const val ENTRY_DATA_KEY = "entry"
-    const val CHAPTER_TITLE_DATA_KEY = "chapterTitle"
-    const val LINK_DATA_KEY = "link"
 
     private val apiErrors = arrayOf(
         UNKNOWN_API,
@@ -190,12 +179,6 @@ object ErrorUtils {
     fun getMessage(error: Throwable): Int {
         return when (val innermostError = getInnermostError(error)) {
             is ProxerException -> getMessageForProxerException(innermostError)
-            is HttpDataSource.InvalidResponseCodeException -> when (innermostError.responseCode) {
-                404 -> R.string.error_video_deleted
-                503 -> R.string.error_video_service_unavailable
-                in 400 until 600 -> R.string.error_video_unknown
-                else -> R.string.error_unknown
-            }
             is SocketTimeoutException -> R.string.error_timeout
             is SSLPeerUnverifiedException -> R.string.error_ssl
             is NotConnectedException -> R.string.error_no_network
@@ -203,10 +186,6 @@ object ErrorUtils {
             is NotLoggedInException -> R.string.error_login_required
             is AgeConfirmationRequiredException -> R.string.error_age_confirmation_needed
             is StreamResolutionException -> R.string.error_stream_resolution
-            is MangaNotAvailableException -> R.string.error_manga_not_available
-            is MangaLinkException -> R.string.error_manga_link
-            is CommentTooLongException -> R.string.error_comment_too_long
-            is CommentInvalidProgressException -> R.string.error_comment_invalid_progress
             else -> R.string.error_unknown
         }
     }
@@ -229,7 +208,6 @@ object ErrorUtils {
             is NotLoggedInException -> R.string.error_action_login
             is NotConnectedException -> R.string.error_action_network_settings
             is AgeConfirmationRequiredException -> R.string.error_action_confirm
-            is MangaLinkException -> R.string.error_action_open_link
             else -> ACTION_MESSAGE_DEFAULT
         }
 
@@ -242,7 +220,6 @@ object ErrorUtils {
             is NotLoggedInException -> LOGIN
             is NotConnectedException -> NETWORK_SETTINGS
             is AgeConfirmationRequiredException -> AGE_CONFIRMATION
-            is MangaLinkException -> OPEN_LINK
             else -> null
         }
 
@@ -250,11 +227,6 @@ object ErrorUtils {
 
         if (error is PartialException) {
             data[ENTRY_DATA_KEY] = error.partialData
-        }
-
-        if (innermostError is MangaLinkException) {
-            data[CHAPTER_TITLE_DATA_KEY] = innermostError.chapterTitle
-            data[LINK_DATA_KEY] = innermostError.link
         }
 
         return ErrorAction(errorMessage, buttonMessage, buttonAction, data)
@@ -316,8 +288,6 @@ object ErrorUtils {
         }
         is PartialException -> error.innerError
         is ChatException -> error.innerError
-        is ExoPlaybackException -> error.cause?.let { getInnermostError(it) } ?: error
-        is Loader.UnexpectedLoaderException -> error.cause?.let { getInnermostError(it) } ?: error
         else -> error
     }
 
@@ -346,12 +316,6 @@ object ErrorUtils {
             }
             LOGIN -> View.OnClickListener { LoginDialog.show(activity) }
             AGE_CONFIRMATION -> View.OnClickListener { AgeConfirmationDialog.show(activity) }
-            OPEN_LINK -> data[LINK_DATA_KEY].let { link ->
-                when (link) {
-                    is HttpUrl -> View.OnClickListener { activity.showPage(link, skipCheck = true) }
-                    else -> null
-                }
-            }
             else -> null
         }
 
@@ -363,6 +327,6 @@ object ErrorUtils {
             else -> null
         }
 
-        enum class ButtonAction { CAPTCHA, NETWORK_SETTINGS, LOGIN, AGE_CONFIRMATION, OPEN_LINK, BOOKMARK }
+        enum class ButtonAction { CAPTCHA, NETWORK_SETTINGS, LOGIN, AGE_CONFIRMATION }
     }
 }

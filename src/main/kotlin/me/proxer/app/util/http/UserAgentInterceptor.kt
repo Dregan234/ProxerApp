@@ -1,6 +1,6 @@
-package me.proxer.app.util.http
+﻿package me.proxer.app.util.http
 
-import me.proxer.app.MainApplication.Companion.USER_AGENT
+import me.proxer.app.TvApplication.Companion.USER_AGENT
 import me.proxer.library.util.ProxerUrls.hasProxerHost
 import okhttp3.Interceptor
 import okhttp3.Response

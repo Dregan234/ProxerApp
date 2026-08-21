@@ -9,10 +9,6 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.text.Editable
 import android.widget.EditText
-import androidx.recyclerview.widget.RecyclerView
-
-inline val RecyclerView.safeLayoutManager: RecyclerView.LayoutManager
-    get() = requireNotNull(layoutManager)
 
 inline val EditText.safeText: Editable
     get() = requireNotNull(text)

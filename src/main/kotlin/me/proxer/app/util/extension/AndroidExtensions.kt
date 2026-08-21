@@ -8,14 +8,12 @@ import android.content.Intent
 import android.content.res.Resources
 import android.util.TypedValue
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.AttrRes
 import androidx.annotation.CheckResult
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
-import androidx.core.view.children
 
 @ColorInt
 inline fun Context.resolveColor(
@@ -53,18 +51,6 @@ inline fun Context.toast(message: Int, duration: Int = Toast.LENGTH_LONG): Toast
 inline fun Context.toast(message: String, duration: Int = Toast.LENGTH_LONG): Toast = Toast
     .makeText(this, message, duration)
     .apply { show() }
-
-val ViewGroup.recursiveChildren: Sequence<View>
-    get() = children.flatMap {
-        if (it is ViewGroup) {
-            sequenceOf(it) + it.recursiveChildren
-        } else {
-            sequenceOf(it)
-        }
-    }
-
-inline fun Intent.newTask(): Intent = apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
-inline fun Intent.clearTop(): Intent = apply { addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP) }
 
 inline fun Context.dip(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 inline fun Context.dip(value: Float): Int = (value * resources.displayMetrics.density).toInt()

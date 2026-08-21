@@ -3,10 +3,8 @@ package me.proxer.app.util.data
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.f2prateek.rx.preferences2.RxSharedPreferences
-import me.proxer.app.manga.MangaReaderOrientation
 import me.proxer.app.settings.theme.ThemeContainer
 import me.proxer.app.util.extension.getSafeString
-import me.proxer.app.util.wrapper.MaterialDrawerWrapper.DrawerItem
 import okhttp3.logging.HttpLoggingInterceptor
 import org.threeten.bp.Instant
 
@@ -33,13 +31,11 @@ class PreferenceHelper(
         const val LINK_CHECK = "check_links"
         const val AUTO_BOOKMARK = "auto_bookmark"
         const val CHECK_CELLULAR = "check_cellular"
-        const val START_PAGE = "start_page"
         const val THEME = "theme"
         const val NOTIFICATIONS_NEWS = "notifications_news"
         const val NOTIFICATIONS_ACCOUNT = "notifications_account"
         const val NOTIFICATIONS_CHAT = "notifications_chat"
         const val NOTIFICATIONS_INTERVAL = "notifications_interval"
-        const val MANGA_READER_ORIENTATION = "manga_reader_orientation"
         const val EXTERNAL_CACHE = "external_cache"
         const val HTTP_LOG_LEVEL = "http_log_level"
         const val HTTP_VERBOSE = "http_log_verbose"
@@ -114,11 +110,6 @@ class PreferenceHelper(
             sharedPreferences.edit { putBoolean(CHECK_CELLULAR, value) }
         }
 
-    val startPage
-        get() = DrawerItem.fromIdOrDefault(
-            sharedPreferences.getSafeString(START_PAGE, "0").toLongOrNull()
-        )
-
     var areNewsNotificationsEnabled
         get() = sharedPreferences.getBoolean(NOTIFICATIONS_NEWS, false)
         set(value) {
@@ -136,14 +127,6 @@ class PreferenceHelper(
 
     val notificationsInterval
         get() = sharedPreferences.getSafeString(NOTIFICATIONS_INTERVAL, "30").toLong()
-
-    var mangaReaderOrientation
-        get() = MangaReaderOrientation.values()[
-            sharedPreferences.getInt(MANGA_READER_ORIENTATION, MangaReaderOrientation.VERTICAL.ordinal)
-        ]
-        set(value) {
-            sharedPreferences.edit { putInt(MANGA_READER_ORIENTATION, value.ordinal) }
-        }
 
     var shouldCacheExternally
         get() = sharedPreferences.getBoolean(EXTERNAL_CACHE, true)

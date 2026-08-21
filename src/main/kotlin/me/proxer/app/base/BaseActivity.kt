@@ -2,27 +2,18 @@ package me.proxer.app.base
 
 import android.os.Bundle
 import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.os.bundleOf
-import com.google.android.material.snackbar.Snackbar
 import com.rubengees.rxbus.RxBus
 import com.uber.autodispose.android.lifecycle.scope
 import com.uber.autodispose.autoDisposable
-import kotterknife.bindView
-import me.proxer.app.R
-import me.proxer.app.util.DeviceUtils
-import me.proxer.app.util.ErrorUtils
 import me.proxer.app.util.compat.TaskDescriptionCompat
 import me.proxer.app.util.data.PreferenceHelper
 import me.proxer.app.util.data.StorageHelper
 import me.proxer.app.util.extension.androidUri
 import me.proxer.app.util.extension.fallbackHandleLink
-import me.proxer.app.util.extension.recursiveChildren
 import me.proxer.app.util.extension.safeInject
 import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment
 import okhttp3.HttpUrl
@@ -40,8 +31,6 @@ abstract class BaseActivity : AppCompatActivity(), CustomTabsAware {
 
     protected open val theme
         @StyleRes get() = preferenceHelper.themeContainer.theme.main
-
-    protected open val root: ViewGroup by bindView(R.id.root)
 
     protected val bus by safeInject<RxBus>()
     protected val storageHelper by safeInject<StorageHelper>()
@@ -93,51 +82,11 @@ abstract class BaseActivity : AppCompatActivity(), CustomTabsAware {
         }
     }
 
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-
-        if (hasFocus && DeviceUtils.isTvDevice(this)) {
-            supportFragmentManager.fragments.forEach { fragment ->
-                (fragment as? BaseContentFragment<*>)?.focusContentOnTvIfNeeded()
-            }
-        }
-    }
-
     override fun setLikelyUrl(url: HttpUrl): Boolean {
         return customTabsHelper.mayLaunchUrl(url.androidUri(), bundleOf(), emptyList())
     }
 
     override fun showPage(url: HttpUrl, forceBrowser: Boolean, skipCheck: Boolean) {
         customTabsHelper.fallbackHandleLink(this, url, forceBrowser, skipCheck)
-    }
-
-    open fun isCurrentFocusInContent(): Boolean = currentFocus?.isShown() == true
-
-    fun snackbar(
-        message: CharSequence,
-        duration: Int = Snackbar.LENGTH_LONG,
-        actionMessage: Int = ErrorUtils.ErrorAction.ACTION_MESSAGE_DEFAULT,
-        actionCallback: View.OnClickListener? = null,
-        maxLines: Int = -1
-    ) {
-        Snackbar.make(root, message, duration).apply {
-            when (actionMessage) {
-                ErrorUtils.ErrorAction.ACTION_MESSAGE_DEFAULT -> {
-                    val multilineActionMessage = getString(R.string.error_action_retry).replace(" ", "\n")
-
-                    setAction(multilineActionMessage, actionCallback)
-                }
-                ErrorUtils.ErrorAction.ACTION_MESSAGE_HIDE -> setAction(null, null)
-                else -> setAction(actionMessage, actionCallback)
-            }
-
-            if (maxLines >= 0) {
-                (view as ViewGroup).recursiveChildren
-                    .filterIsInstance(TextView::class.java)
-                    .forEach { it.maxLines = maxLines }
-            }
-
-            show()
-        }
     }
 }

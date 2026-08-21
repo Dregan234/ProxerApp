@@ -6,34 +6,23 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.util.Linkify
-import android.widget.ImageView
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.text.util.LinkifyCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.bumptech.glide.request.target.Target
 import me.proxer.app.BuildConfig.APPLICATION_ID
-import me.proxer.app.GlideRequest
-import me.proxer.app.GlideRequests
 import me.proxer.app.R
 import me.proxer.app.settings.theme.ThemeVariant
 import me.proxer.app.ui.LinkCheckDialog
 import me.proxer.app.ui.WebViewActivity
 import me.proxer.app.util.Utils
 import me.proxer.app.util.data.PreferenceHelper
-import me.proxer.app.util.wrapper.SimpleGlideRequestListener
-import me.proxer.library.ProxerException
 import me.proxer.library.util.ProxerUrls.hasProxerHost
 import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment
 import okhttp3.HttpUrl
@@ -44,26 +33,11 @@ import org.koin.core.context.GlobalContext
 import org.koin.core.parameter.DefinitionParameters
 import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.qualifier.Qualifier
-import timber.log.Timber
-import java.util.EnumSet
 import java.util.regex.Pattern.quote
 
 val MENTIONS_REGEX = Regex("@(?:.*?)(?:(?:(?! )(?!${quote(".")} )(?!${quote(".")}\n)(?!\n)).)*").toPattern()
 
-inline fun <reified T : Enum<T>> enumSetOf(collection: Collection<T>): EnumSet<T> = when (collection.isEmpty()) {
-    true -> EnumSet.noneOf(T::class.java)
-    false -> EnumSet.copyOf(collection)
-}
-
-inline fun <reified T : Enum<T>> enumSetOf(vararg items: T): EnumSet<T> = when (items.isEmpty()) {
-    true -> EnumSet.noneOf(T::class.java)
-    false -> EnumSet.copyOf(items.toSet())
-}
-
 inline fun <T> unsafeLazy(noinline initializer: () -> T) = lazy(LazyThreadSafetyMode.NONE, initializer)
-
-inline fun Context.getQuantityString(id: Int, quantity: Int): String = resources
-    .getQuantityString(id, quantity, quantity)
 
 inline fun Fragment.dip(value: Int) = requireContext().dip(value)
 
@@ -80,27 +54,6 @@ inline fun CharSequence.linkify(web: Boolean = true, mentions: Boolean = true, v
     return spannable
 }
 
-fun PackageManager.isPackageInstalled(packageName: String) = try {
-    getApplicationInfo(packageName, 0).enabled
-} catch (error: PackageManager.NameNotFoundException) {
-    false
-}
-
-inline fun GlideRequests.defaultLoad(view: ImageView, url: HttpUrl): Target<Drawable> = load(url.toString())
-    .transition(DrawableTransitionOptions.withCrossFade())
-    .logErrors()
-    .into(view)
-
-inline fun <T> GlideRequest<T>.logErrors(): GlideRequest<T> = this.addListener(
-    object : SimpleGlideRequestListener<T> {
-        override fun onLoadFailed(error: GlideException?): Boolean {
-            if (error != null) Timber.e(error)
-
-            return false
-        }
-    }
-)
-
 inline fun HttpUrl.androidUri(): Uri = Uri.parse(toString())
 
 fun String.toPrefixedUrlOrNull(): HttpUrl? = when {
@@ -109,21 +62,6 @@ fun String.toPrefixedUrlOrNull(): HttpUrl? = when {
         this.startsWith("//") -> "http:$this"
         else -> "http://$this"
     }.toHttpUrlOrNull()
-}
-
-fun String.toPrefixedHttpUrl() = toPrefixedUrlOrNull() ?: throw ProxerException(ProxerException.ErrorType.PARSING)
-
-inline fun <T : Enum<T>> Bundle.putEnumSet(key: String, set: EnumSet<T>) {
-    putIntArray(key, set.map { it.ordinal }.toIntArray())
-}
-
-inline fun <reified T : Enum<T>> Bundle.getEnumSet(key: String, klass: Class<T>): EnumSet<T> {
-    val values = getIntArray(key)?.map { klass.enumConstants?.get(it) }?.filterNotNull()
-
-    return when {
-        values?.isEmpty() != false -> EnumSet.noneOf(T::class.java)
-        else -> EnumSet.copyOf(values)
-    }
 }
 
 inline fun Intent.addReferer(): Intent {

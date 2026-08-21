@@ -1,8 +1,8 @@
-package me.proxer.app.anime.resolver
+﻿package me.proxer.app.anime.resolver
 
 import android.net.Uri
 import io.reactivex.Single
-import me.proxer.app.MainApplication
+import me.proxer.app.TvApplication
 import me.proxer.app.exception.StreamResolutionException
 import me.proxer.app.util.extension.buildSingle
 import me.proxer.app.util.extension.toBodySingle
@@ -28,7 +28,7 @@ object ProxerStreamCFResolver : StreamResolver() {
                         Request.Builder()
                             .get()
                             .url(link.toPrefixedUrlOrNull() ?: throw StreamResolutionException())
-                            .header("User-Agent", MainApplication.USER_AGENT)
+                            .header("User-Agent", TvApplication.USER_AGENT)
                             .header("Connection", "close")
                             .build()
                     )

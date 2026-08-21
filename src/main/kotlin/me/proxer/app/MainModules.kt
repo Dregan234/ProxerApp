@@ -1,59 +1,14 @@
 package me.proxer.app
 
-import android.content.res.Resources
 import androidx.preference.PreferenceManager
-import androidx.room.Room
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import androidx.work.WorkManager
 import com.f2prateek.rx.preferences2.RxSharedPreferences
 import com.rubengees.rxbus.RxBus
 import com.squareup.moshi.Moshi
-import me.proxer.app.MainApplication.Companion.USER_AGENT
-import me.proxer.app.anime.AnimeViewModel
-import me.proxer.app.anime.schedule.ScheduleViewModel
-import me.proxer.app.auth.LoginHandler
-import me.proxer.app.auth.LoginViewModel
-import me.proxer.app.auth.LogoutViewModel
+import me.proxer.app.TvApplication.Companion.USER_AGENT
 import me.proxer.app.auth.ProxerLoginTokenManager
-import me.proxer.app.bookmark.BookmarkViewModel
-import me.proxer.app.chat.prv.LocalConference
-import me.proxer.app.chat.prv.conference.ConferenceViewModel
-import me.proxer.app.chat.prv.conference.info.ConferenceInfoViewModel
-import me.proxer.app.chat.prv.create.CreateConferenceViewModel
-import me.proxer.app.chat.prv.message.MessengerReportViewModel
-import me.proxer.app.chat.prv.message.MessengerViewModel
-import me.proxer.app.chat.prv.sync.MessengerDatabase
-import me.proxer.app.chat.pub.message.ChatReportViewModel
-import me.proxer.app.chat.pub.message.ChatViewModel
-import me.proxer.app.chat.pub.room.ChatRoomViewModel
-import me.proxer.app.chat.pub.room.info.ChatRoomInfoViewModel
-import me.proxer.app.comment.EditCommentViewModel
-import me.proxer.app.forum.TopicViewModel
-import me.proxer.app.info.industry.IndustryInfoViewModel
-import me.proxer.app.info.industry.IndustryProjectViewModel
-import me.proxer.app.info.translatorgroup.TranslatorGroupInfoViewModel
-import me.proxer.app.info.translatorgroup.TranslatorGroupProjectViewModel
-import me.proxer.app.manga.MangaViewModel
-import me.proxer.app.media.MediaInfoViewModel
-import me.proxer.app.media.TagDatabase
-import me.proxer.app.media.comments.CommentsViewModel
-import me.proxer.app.media.discussion.DiscussionViewModel
-import me.proxer.app.media.episode.EpisodeViewModel
-import me.proxer.app.media.list.MediaListViewModel
-import me.proxer.app.media.recommendation.RecommendationViewModel
-import me.proxer.app.media.relation.RelationViewModel
-import me.proxer.app.news.NewsViewModel
-import me.proxer.app.notification.NotificationViewModel
-import me.proxer.app.profile.ProfileViewModel
-import me.proxer.app.profile.about.ProfileAboutViewModel
-import me.proxer.app.profile.comment.ProfileCommentViewModel
-import me.proxer.app.profile.history.HistoryViewModel
-import me.proxer.app.profile.media.ProfileMediaListViewModel
-import me.proxer.app.profile.settings.ProfileSettingsViewModel
-import me.proxer.app.profile.topten.TopTenViewModel
-import me.proxer.app.settings.status.ServerStatusViewModel
-import me.proxer.app.ui.LinkCheckViewModel
 import me.proxer.app.util.Mp4UploadTrustManagerWorkaround
 import me.proxer.app.util.Validators
 import me.proxer.app.util.data.HawkMoshiParser
@@ -70,10 +25,6 @@ import me.proxer.app.util.http.UserAgentInterceptor
 import me.proxer.app.util.logging.HttpTimberLogger
 import me.proxer.library.LoginTokenManager
 import me.proxer.library.ProxerApi
-import me.proxer.library.enums.AnimeLanguage
-import me.proxer.library.enums.Category
-import me.proxer.library.enums.CommentSortCriteria
-import me.proxer.library.enums.Language
 import okhttp3.Cache
 import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
@@ -81,7 +32,6 @@ import okhttp3.brotli.BrotliInterceptor
 import okhttp3.internal.platform.Platform
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.threeten.bp.Instant
@@ -98,9 +48,6 @@ private const val DEFAULT_RX_PREFERENCES = "defaultRxPreferences"
 private const val STORAGE_RX_PREFERENCES = "storageRxPreferences"
 
 private const val STORAGE_PREFERENCES_NAME = "me.proxer.encrypted_preferences"
-
-private const val CHAT_DATABASE_NAME = "chat.db"
-private const val TAG_DATABASE_NAME = "tag.db"
 
 private const val HTTP_CACHE_SIZE = 1_024L * 1_024L * 10L
 private const val HTTP_CACHE_NAME = "http"
@@ -207,21 +154,6 @@ private val applicationModules = module {
 
     single { Validators(get(), get()) }
 
-    single {
-        Room.databaseBuilder(androidContext(), MessengerDatabase::class.java, CHAT_DATABASE_NAME)
-            .addMigrations(MessengerDatabase.MIGRATION_1_2)
-            .build()
-    }
-
-    single {
-        Room.databaseBuilder(androidContext(), TagDatabase::class.java, TAG_DATABASE_NAME)
-            .addMigrations(TagDatabase.MIGRATION_1_2)
-            .build()
-    }
-
-    single { get<MessengerDatabase>().dao() }
-    single { get<TagDatabase>().dao() }
-
     single { HawkMoshiParser(get()) }
 
     single {
@@ -234,76 +166,6 @@ private val applicationModules = module {
     }
 
     single<LoginTokenManager> { ProxerLoginTokenManager(get()) }
-    single { LoginHandler(get(), get(), get(), get()) }
 }
 
-private val viewModelModule = module {
-    viewModel { LoginViewModel() }
-    viewModel { LogoutViewModel() }
-
-    viewModel { NewsViewModel() }
-    viewModel { NotificationViewModel() }
-
-    viewModel { CreateConferenceViewModel() }
-    viewModel { (searchQuery: String) -> ConferenceViewModel(searchQuery) }
-    viewModel { (conferenceId: String) -> ConferenceInfoViewModel(conferenceId) }
-    viewModel { (initialConference: LocalConference) -> MessengerViewModel(initialConference) }
-    viewModel { ChatRoomViewModel() }
-    viewModel { (chatRoomId: String) -> ChatViewModel(chatRoomId) }
-    viewModel { (chatRoomId: String) -> ChatRoomInfoViewModel(chatRoomId) }
-    viewModel { MessengerReportViewModel() }
-    viewModel { ChatReportViewModel() }
-
-    viewModel { (searchQuery: String?, category: Category, filterAvailable: Boolean) ->
-        BookmarkViewModel(searchQuery, category, filterAvailable)
-    }
-
-    viewModel { parameterList ->
-        MediaListViewModel(
-            parameterList[0], parameterList[1], parameterList[2], parameterList[3], parameterList[4],
-            parameterList[5], parameterList[6], parameterList[7], parameterList[8], parameterList[9],
-            parameterList[10], parameterList[11]
-        )
-    }
-
-    viewModel { ScheduleViewModel() }
-
-    viewModel { (userId: String?, username: String?) -> ProfileAboutViewModel(userId, username) }
-    viewModel { (userId: String?, username: String?) -> ProfileViewModel(userId, username) }
-    viewModel { (userId: String?, username: String?) -> TopTenViewModel(userId, username) }
-    viewModel { (userId: String?, username: String?) -> HistoryViewModel(userId, username) }
-    viewModel { ProfileSettingsViewModel() }
-
-    viewModel { parameterList ->
-        ProfileMediaListViewModel(parameterList[0], parameterList[1], parameterList[2], parameterList[3])
-    }
-
-    viewModel { (userId: String?, username: String?, category: Category?) ->
-        ProfileCommentViewModel(userId, username, category)
-    }
-
-    viewModel { (id: String, resources: Resources) -> TopicViewModel(id, resources) }
-
-    viewModel { (entryId: String) -> MediaInfoViewModel(entryId) }
-    viewModel { (entryId: String) -> EpisodeViewModel(entryId) }
-    viewModel { (entryId: String, sortCriteria: CommentSortCriteria) -> CommentsViewModel(entryId, sortCriteria) }
-    viewModel { (entryId: String) -> RelationViewModel(entryId) }
-    viewModel { (entryId: String) -> RecommendationViewModel(entryId) }
-    viewModel { (entryId: String) -> DiscussionViewModel(entryId) }
-
-    viewModel { (industryId: String) -> IndustryInfoViewModel(industryId) }
-    viewModel { (industryId: String) -> IndustryProjectViewModel(industryId) }
-    viewModel { (translatorGroupId: String) -> TranslatorGroupInfoViewModel(translatorGroupId) }
-    viewModel { (translatorGroupId: String) -> TranslatorGroupProjectViewModel(translatorGroupId) }
-
-    viewModel { (entryId: String, language: Language, episode: Int) -> MangaViewModel(entryId, language, episode) }
-    viewModel { (entryId: String, language: AnimeLanguage, episode: Int) -> AnimeViewModel(entryId, language, episode) }
-
-    viewModel { (id: String?, entryId: String?) -> EditCommentViewModel(id, entryId) }
-
-    viewModel { ServerStatusViewModel() }
-
-    viewModel { LinkCheckViewModel() }
-}
-
-val koinModules = listOf(applicationModules, viewModelModule)
+val koinModules = listOf(applicationModules)

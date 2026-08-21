@@ -1,8 +1,8 @@
-package me.proxer.app.anime.resolver
+﻿package me.proxer.app.anime.resolver
 
 import android.net.Uri
 import io.reactivex.Single
-import me.proxer.app.MainApplication.Companion.USER_AGENT
+import me.proxer.app.TvApplication.Companion.USER_AGENT
 import me.proxer.app.exception.StreamResolutionException
 import me.proxer.app.util.extension.buildSingle
 import me.proxer.app.util.extension.toBodySingle

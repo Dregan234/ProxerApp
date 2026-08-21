@@ -3,7 +3,6 @@
 package me.proxer.app.util.extension
 
 import android.os.Looper
-import androidx.recyclerview.widget.RecyclerView
 import com.uber.autodispose.CompletableSubscribeProxy
 import com.uber.autodispose.FlowableSubscribeProxy
 import com.uber.autodispose.ObservableSubscribeProxy
@@ -28,16 +27,7 @@ inline fun Observer<*>.checkMainThread(): Boolean {
         false
     } else {
         true
-    }
 }
-
-inline fun <reified I, reified O> Observable<I>.mapBindingAdapterPosition(
-    noinline bindingAdapterPosition: (I) -> Int,
-    noinline mapper: (Int) -> O
-): Observable<O> {
-    return this.map(bindingAdapterPosition)
-        .filter { it != RecyclerView.NO_POSITION }
-        .map(mapper)
 }
 
 inline fun <T> Observable<T>.subscribeAndLogErrors(
