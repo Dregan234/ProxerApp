@@ -315,7 +315,7 @@ private fun SearchScreen(viewModel: TvViewModel, onAnimeSelected: (TvAnime) -> U
                     AnimeCard(anime, onAnimeSelected)
                 }
                 if (loadingMore) {
-                    item(span = { GridItemSpan(maxLineSpan) }) {
+                    item(key = "loading-more", span = { GridItemSpan(maxLineSpan) }) {
                         Box(
                             modifier = Modifier.fillMaxWidth().padding(16.dp),
                             contentAlignment = Alignment.Center

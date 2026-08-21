@@ -94,7 +94,7 @@ class TvViewModel(
                 .subscribe(
                     {
                         knownAnime.putAll(it.associateBy { anime -> anime.id })
-                        _searchResults.value = it
+                        _searchResults.value = it.distinctBy { anime -> anime.id }
                         canLoadMore = it.size == TvRepository.PAGE_SIZE
                     },
                     { _error.value = it.message ?: "Die Suche ist fehlgeschlagen." }
@@ -106,14 +106,19 @@ class TvViewModel(
         if (_isLoading.value || _isLoadingMore.value || activeSearchQuery.isBlank() || !canLoadMore) return
 
         val nextPage = searchPage + 1
+        val requestQuery = activeSearchQuery
         _isLoadingMore.value = true
         disposables.add(
-            repository.search(activeSearchQuery, nextPage)
+            repository.search(requestQuery, nextPage)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doFinally { _isLoadingMore.value = false }
                 .subscribe(
                     {
+                        if (requestQuery != activeSearchQuery) {
+                            canLoadMore = false
+                            return@subscribe
+                        }
                         searchPage = nextPage
                         knownAnime.putAll(it.associateBy { anime -> anime.id })
                         _searchResults.value = (_searchResults.value + it).distinctBy { anime -> anime.id }
